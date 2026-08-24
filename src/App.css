@@ -9,6 +9,38 @@
   min-height: 100svh;
 }
 
+/*
+ * Belt-and-suspenders dark-theme override: AppRoot's own `useAppearance` hook keeps its own
+ * internal state seeded from the `appearance` prop's value on first mount and only re-syncs it
+ * via a `useEffect` — on at least one real Telegram client this produced a stuck-light
+ * SegmentedControl (and friends) against an otherwise-correctly-dark app shell, and the exact
+ * root cause wasn't reproducible outside real Telegram to fix upstream with confidence. Rather
+ * than keep chasing AppRoot's internal timing, force telegram-ui's own dark-mode custom
+ * properties (values copied verbatim from its `.tgui-865b921add8ee075` class, see
+ * node_modules/@telegram-apps/telegram-ui/dist/styles.css) directly off our own `data-scheme`
+ * attribute, which mirrors the exact same `appearance` value App.tsx already computes correctly
+ * elsewhere (it drives the working --tg-theme-* vars). `.app-root[data-scheme]` has higher
+ * specificity than AppRoot's own single-class selector, so this wins regardless of whichever
+ * value AppRoot's internal state landed on.
+ */
+.app-root[data-scheme="dark"] {
+  --tgui--bg_color: var(--tg-theme-bg-color, #212121);
+  --tgui--text_color: var(--tg-theme-text-color, #fff);
+  --tgui--hint_color: var(--tg-theme-hint-color, #aaa);
+  --tgui--secondary_bg_color: var(--tg-theme-secondary-bg-color, #0f0f0f);
+  --tgui--header_bg_color: var(--tg-theme-header-bg-color, #212121);
+  --tgui--section_bg_color: var(--tg-theme-section-bg-color, #212121);
+  --tgui--section_header_text_color: var(--tg-theme-section-header-text-color, #aaa);
+  --tgui--subtitle_text_color: var(--tg-theme-subtitle-text-color, #aaa);
+  --tgui--tertiary_bg_color: #2a2a2a;
+  --tgui--quartenary_bg_color: #2f2f2f;
+  --tgui--segmented_control_active_bg: #2f2f2f;
+  --tgui--card_bg_color: #242424;
+  --tgui--secondary_hint_color: #78797e;
+  --tgui--divider: hsla(0, 0%, 100%, 0.05);
+  --tgui--outline: hsla(0, 0%, 100%, 0.1);
+}
+
 .app-shell {
   display: flex;
   flex-direction: column;

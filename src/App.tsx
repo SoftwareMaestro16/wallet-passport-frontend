@@ -64,7 +64,7 @@ export default function App() {
   const { platform, appearance } = useTelegramAppearance();
 
   return (
-    <AppRoot platform={platform} appearance={appearance} className="app-root">
+    <AppRoot platform={platform} appearance={appearance} data-scheme={appearance} className="app-root">
       <TonConnectProvider>
         <HashRouter>
           <AppShell />

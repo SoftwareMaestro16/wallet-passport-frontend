@@ -6,21 +6,28 @@
     "sampleCardTitle": "Sample card",
     "sampleScoreLabel": "TON Score",
     "testnetBadge": "Testnet",
-    "generateButton": "Generate"
+    "scanButton": "Scan Wallet",
+    "updateButton": "Update Passport"
   },
   "scanning": {
     "title": "Analyzing your wallet",
     "subtitle": "This takes 1-2 minutes — we're reconstructing your full on-chain history.",
     "steps": {
-      "0": "Loading wallet history...",
-      "1": "Searching transactions...",
-      "2": "Calculating volumes...",
-      "3": "Checking DeFi activity...",
-      "4": "Looking for NFTs and collectibles...",
-      "5": "Checking staking...",
-      "6": "Assembling your profile..."
+      "0": "Loading transactions...",
+      "1": "Analyzing traces...",
+      "2": "Analyzing Jettons...",
+      "3": "Analyzing DeFi...",
+      "4": "Analyzing NFTs & Telegram assets...",
+      "5": "Reconstructing staking history...",
+      "6": "Searching for Rare Relics...",
+      "7": "Calculating Wallet Score...",
+      "8": "Preparing Wallet Passport..."
     },
-    "skip": "Skip"
+    "skip": "Skip",
+    "failed": "The scan failed.",
+    "failedHint": "Something went wrong while scanning this wallet. You can try again.",
+    "retry": "Retry",
+    "backToConnect": "Back"
   },
   "profile": {
     "title": "Profile",
@@ -29,9 +36,114 @@
     "backendUnreachable": "Server unreachable. Check your connection and try again.",
     "retry": "Retry",
     "scoreLabel": "TON Score",
-    "comingSoon": "Detailed stats coming soon",
     "walletLabel": "Wallet",
-    "disconnect": "Disconnect"
+    "disconnect": "Disconnect",
+    "loadingProfile": "Loading your wallet profile...",
+    "profileError": "Could not load your wallet profile.",
+    "notScanned": {
+      "title": "No scan yet",
+      "body": "Scan this wallet to build its Wallet Passport profile.",
+      "cta": "Scan Wallet"
+    },
+    "summary": {
+      "title": "Wallet Score",
+      "walletAge": "Wallet age",
+      "walletAgeDays_one": "{{count}} day",
+      "walletAgeDays_other": "{{count}} days",
+      "transactions": "Transactions",
+      "activeDays": "Active days",
+      "economicVolume": "Economic volume",
+      "strongestCategories": "Strongest categories"
+    },
+    "categories": {
+      "main": "Main Passport",
+      "pioneer": "Pioneer",
+      "operator": "Operator",
+      "defi": "DeFi",
+      "collector": "Collector",
+      "staker": "Staker",
+      "builder": "Builder"
+    },
+    "sections": {
+      "overview": {
+        "title": "Overview",
+        "firstTx": "First transaction",
+        "age": "Wallet age",
+        "totalTx": "Total transactions",
+        "successfulTx": "Successful transactions",
+        "fees": "Fees paid",
+        "counterparties": "Unique counterparties",
+        "dataConfidence": "Data confidence",
+        "noHistory": "No on-chain history found for this wallet yet."
+      },
+      "activity": {
+        "title": "Activity",
+        "activeDays": "Active days",
+        "activeMonths": "Active months",
+        "consistency": "Consistency score"
+      },
+      "jettons": {
+        "title": "Jettons",
+        "transfers": "Jetton transfers",
+        "burns": "Jetton burns",
+        "masters": "Unique Jettons held",
+        "partialData": "Some Jetton data sources were unavailable during the last scan — numbers may be incomplete."
+      },
+      "builder": {
+        "title": "Builder",
+        "deployments": "Contracts deployed",
+        "score": "Builder score"
+      },
+      "passports": {
+        "title": "Passports",
+        "minted": "Minted · revision {{revision}}",
+        "eligible": "Eligible to mint",
+        "notEligible": "Not eligible yet",
+        "canMint": "Can mint",
+        "canRefresh": "Can refresh",
+        "locked": "Locked"
+      },
+      "comingSoon": {
+        "badge": "Soon",
+        "defi": {
+          "title": "DeFi",
+          "body": "Swap, DEX and liquidity-pool detection is coming soon."
+        },
+        "nfts": {
+          "title": "NFTs",
+          "body": "NFT purchase and sale history reconstruction is coming soon."
+        },
+        "telegramAssets": {
+          "title": "Telegram Assets",
+          "body": "Telemint, Fragment, +888, Gifts, DNS and Getgems detection is coming soon."
+        },
+        "staking": {
+          "title": "Staking",
+          "body": "Staking cycle reconstruction is coming soon."
+        },
+        "history": {
+          "title": "History",
+          "body": "TON-20 and historical-era detection is coming soon."
+        },
+        "rareRelics": {
+          "title": "Rare Relics",
+          "body": "Rare Relic detectors are coming soon."
+        }
+      }
+    },
+    "actions": {
+      "title": "Actions",
+      "go": "Open",
+      "mint": "Mint Passport",
+      "refresh": "Refresh Passport",
+      "refreshHint": "Coming soon — refresh isn't wired up yet.",
+      "viewRelics": "View Rare Relics",
+      "viewRelicsHint": "Coming soon.",
+      "share": "Share Score",
+      "shareHint": "Coming soon.",
+      "compare": "Compare Wallet",
+      "compareHint": "Coming soon."
+    }
   },
   "mint": {
     "title": "Mint",
