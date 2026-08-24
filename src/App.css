@@ -133,16 +133,16 @@
   gap: 8px;
   padding: 12px;
   border-radius: 12px;
-  background: rgba(255, 59, 48, 0.08);
-  color: #d70015;
+  background: rgba(255, 59, 48, 0.12);
+  color: var(--tg-theme-destructive-text-color, #d70015);
   font-size: 14px;
 }
 
 .testnet-warning {
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 149, 0, 0.12);
-  color: #a15c00;
+  background: rgba(255, 149, 0, 0.16);
+  color: var(--tg-theme-destructive-text-color, #a15c00);
   font-size: 13px;
 }
 

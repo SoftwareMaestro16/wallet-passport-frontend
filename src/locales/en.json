@@ -25,7 +25,11 @@
     "statusPending": "Waiting for wallet confirmation...",
     "statusSuccess": "Transaction sent! Your passport will appear once confirmed on-chain.",
     "statusError": "Could not prepare the transaction. Please try again.",
-    "notConnected": "Connect your wallet first"
+    "notConnected": "Connect your wallet first",
+    "retry": "Retry"
+  },
+  "testnetGuard": {
+    "warning": "Wallet is connected to mainnet. Switch your wallet to testnet to use Wallet Passport (testnet MVP)."
   },
   "nav": {
     "connect": "Wallet",

@@ -7,17 +7,10 @@ import { useTonConnectAccount } from "../ton/useTonConnectAccount";
  * and why it is a UX nicety, not a security boundary (the backend must re-check independently).
  */
 export function TestnetGuard() {
-  const { i18n } = useTranslation();
+  const { t } = useTranslation();
   const { isConnected, isTestnet } = useTonConnectAccount();
 
   if (!isConnected || isTestnet) return null;
 
-  const isRu = i18n.language === "ru";
-  return (
-    <div className="testnet-warning">
-      {isRu
-        ? "Кошелёк подключён к mainnet. Переключите кошелёк в тестовую сеть (testnet), чтобы пользоваться Wallet Passport (testnet MVP)."
-        : "Wallet is connected to mainnet. Switch your wallet to testnet to use Wallet Passport (testnet MVP)."}
-    </div>
-  );
+  return <div className="testnet-warning">{t("testnetGuard.warning")}</div>;
 }

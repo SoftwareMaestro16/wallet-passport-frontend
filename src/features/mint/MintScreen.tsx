@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { getTelegramInitData } from "../../app/telegram";
-import { api, ApiError, type MintPrepareResponse } from "../../api/client";
+import { api, ApiError } from "../../api/client";
 import { TestnetGuard } from "../../shared/TestnetGuard";
+import { buildMintTransactionRequest } from "./mintTx";
 
 type MintState =
   | { status: "idle" }
@@ -13,6 +14,16 @@ type MintState =
   | { status: "error"; message: string };
 
 const CATEGORY = "MAIN" as const;
+
+/** Backend error bodies are expected to be `{ message: string }` per TMAGUIDE.md conventions; fall back gracefully if not. */
+function backendErrorMessage(err: unknown): string | undefined {
+  if (!(err instanceof ApiError)) return undefined;
+  const body = err.body;
+  if (body && typeof body === "object" && "message" in body && typeof (body as { message: unknown }).message === "string") {
+    return (body as { message: string }).message;
+  }
+  return undefined;
+}
 
 export function MintScreen() {
   const { t } = useTranslation();
@@ -30,10 +41,13 @@ export function MintScreen() {
 
       setState({ status: "success", txHash: result.boc?.slice(0, 16) });
     } catch (err) {
-      const message = err instanceof ApiError ? `${t("mint.statusError")} (${err.status})` : t("mint.statusError");
+      const detail = backendErrorMessage(err) ?? (err instanceof ApiError ? `(${err.status})` : undefined);
+      const message = detail ? `${t("mint.statusError")} ${detail}` : t("mint.statusError");
       setState({ status: "error", message });
     }
   }
+
+  const isBusy = state.status === "preparing" || state.status === "pending";
 
   return (
     <div className="screen mint-screen">
@@ -43,60 +57,26 @@ export function MintScreen() {
 
       {!isConnected && <p className="hint">{t("mint.notConnected")}</p>}
 
-      <button
-        type="button"
-        className="primary-btn"
-        disabled={!isConnected || state.status === "preparing" || state.status === "pending"}
-        onClick={handleMint}
-      >
-        {t("mint.mintButton")}
-      </button>
+      {state.status !== "error" && (
+        <button type="button" className="primary-btn" disabled={!isConnected || isBusy} onClick={handleMint}>
+          {t("mint.mintButton")}
+        </button>
+      )}
+
+      {state.status === "error" && (
+        <div className="error-box">
+          <p>{state.message}</p>
+          <button type="button" onClick={handleMint}>
+            {t("mint.retry")}
+          </button>
+        </div>
+      )}
 
       <p className="hint status-line">
         {state.status === "idle" && t("mint.statusIdle")}
-        {state.status === "preparing" && t("mint.statusPending")}
-        {state.status === "pending" && t("mint.statusPending")}
+        {(state.status === "preparing" || state.status === "pending") && t("mint.statusPending")}
         {state.status === "success" && t("mint.statusSuccess")}
-        {state.status === "error" && state.message}
       </p>
     </div>
   );
-}
-
-/**
- * Builds the TonConnect `sendTransaction` request for the mint_or_refresh message.
- *
- * STUBBED: the exact BOC/cell layout depends on PassportCollection's expected internal
- * message body (opcode + permit cell + signature cell, per ARCHITECTURE.md §5 "signed
- * -authorization flow" and §6 "deterministic slot addressing"), which is being built in
- * parallel in `contracts/`. Once `contracts/README.md` (or SMART-CONTRACTS.md) documents the
- * real TL-B layout and opcode, replace the `payload` below with a proper cell built via
- * `@ton/core`'s `beginCell()...endCell().toBoc().toString("base64")`, matching whatever
- * `mint_or_refresh` expects (likely: opcode, category id, permit cell ref, signature ref).
- *
- * Until then this at least exercises the full flow (prepare -> build -> sendTransaction ->
- * UI state machine) end-to-end against a mocked/dummy backend response.
- */
-function buildMintTransactionRequest(prepared: MintPrepareResponse) {
-  // TODO: match PassportCollection mint_or_refresh message layout once contracts/README.md is available.
-  // For now we forward the backend-provided permit/signature as opaque base64 strings; this WILL need
-  // to become a proper Cell built with @ton/core once the contract's exact TL-B schema is known.
-  return {
-    validUntil: Math.floor(Date.now() / 1000) + 5 * 60,
-    messages: [
-      {
-        address: prepared.collectionAddress,
-        amount: "50000000", // 0.05 TON placeholder gas budget — confirm against contract's actual gas requirements.
-        // TODO: replace with a real BOC once the mint_or_refresh cell layout is finalized.
-        payload: encodeStubPayload(prepared),
-      },
-    ],
-  };
-}
-
-function encodeStubPayload(prepared: MintPrepareResponse): string {
-  // Placeholder only — NOT a valid TON message cell. Prevents accidental use by making the
-  // intent obvious if inspected in devtools/network logs during the stub period.
-  const stub = JSON.stringify({ __stub: true, permit: prepared.permit, signature: prepared.signature });
-  return btoa(stub);
 }

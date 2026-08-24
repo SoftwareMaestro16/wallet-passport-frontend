@@ -85,19 +85,23 @@ since wallets validate the manifest's `url` against the page origin. Update this
   drives an idle → preparing → pending → success/error UI state machine around
   `tonConnectUI.sendTransaction(...)`.
 
-  **Stubbed on purpose:** `buildMintTransactionRequest` / `encodeStubPayload` in
-  `src/features/mint/MintScreen.tsx` do NOT build a real TON message cell — they base64-encode a
-  JSON placeholder so the flow is exercisable end-to-end today. The actual `mint_or_refresh`
-  message body (opcode + permit cell ref + signature ref, per `ARCHITECTURE.md` §5/§6) is being
-  designed in parallel in `contracts/`. Search for:
+  **Stubbed on purpose:** the cell-encoding is isolated in `src/features/mint/mintTx.ts`
+  (`buildMintTransactionRequest` / `encodeMintPayload`) — it does NOT build a real TON message
+  cell, it base64-encodes a JSON placeholder so the flow is exercisable end-to-end today.
+  `MintScreen.tsx` only imports `buildMintTransactionRequest` and never sees the encoding; it
+  owns the idle → preparing → pending → success/error state machine, backend error-message
+  surfacing (`err.body.message` when the API returns one, falling back to the HTTP status), and
+  a retry affordance on failure. The actual `mint_or_refresh` message body (opcode + permit cell
+  ref + signature ref, per `ARCHITECTURE.md` §5/§6) is being designed in parallel in
+  `contracts/`. Search for:
 
   ```
   // TODO: match PassportCollection mint_or_refresh message layout once contracts/README.md is available.
   ```
 
   Once `contracts/README.md` or `SMART-CONTRACTS.md` documents the real TL-B layout, replace the
-  stub with a proper `@ton/core` `beginCell()...endCell()` BOC. Everything else (API call, tx
-  request scaffolding, UI states) should not need to change.
+  stub in `mintTx.ts` with a proper `@ton/core` `beginCell()...endCell()` BOC — that file is the
+  only thing that should need to change.
 
 ## API client
 
@@ -110,7 +114,7 @@ since wallets validate the manifest's `url` against the page origin. Update this
 
 - [ ] Confirm real backend routes/response shapes for `auth/ton-proof/*` and
       `passports/:category/mint/prepare`; update `src/api/client.ts` types accordingly.
-- [ ] Replace the mint cell stub (`src/features/mint/MintScreen.tsx`) once
+- [ ] Replace the mint cell stub (`src/features/mint/mintTx.ts`) once
       `contracts/README.md` documents the `mint_or_refresh` message layout.
 - [ ] Point `public/tonconnect-manifest.json` and `.env.example` at the real deploy domain.
 - [ ] Wire the real score/domain-card data into Profile once the scoring engine exists
