@@ -1,7 +1,7 @@
 # Wallet Passport — Telegram Mini App (client)
 
-Testnet-only MVP frontend for Wallet Passport. Vite + React + TypeScript + `@tonconnect/ui-react`.
-See `../ARCHITECTURE.md` for the full system picture.
+Testnet-only MVP frontend for Wallet Passport. Vite + React + TypeScript + `@tonconnect/ui-react` +
+`@telegram-apps/telegram-ui`. See `../ARCHITECTURE.md` for the full system picture.
 
 ## Setup
 
@@ -33,12 +33,39 @@ at the dev server, registered as a Mini App with @BotFather.
 The switcher (top-right corner, `src/shared/LanguageSwitcher.tsx`) lets the user override
 auto-detection at any time.
 
+## UI kit — `@telegram-apps/telegram-ui`
+
+Every screen is built from this kit's primitives (`Section`, `Cell`, `Button`, `Tabbar`, `Banner`,
+`SegmentedControl`, `Progress`, `Spinner`, `Avatar`, `Badge`, ...) instead of hand-rolled HTML/CSS,
+so the app reads as a native Telegram surface rather than a generic web page. `TonConnectButton`
+(from `@tonconnect/ui-react`) is the one exception — TonConnect owns that component, we only style
+its surrounding layout with the kit.
+
+**Anything new under `src/features/*` or `src/shared/*` must be built from this kit's components,
+not raw `<div>`/`<button>` markup** — that's how the app stays visually consistent and picks up
+theme/platform changes for free.
+
+The whole tree is wrapped in the kit's `AppRoot` (`src/App.tsx`), which needs `platform`
+(`"ios" | "base"`) and `appearance` (`"light" | "dark"`) to render Telegram's actual look instead of
+guessing from `prefers-color-scheme`. `useTelegramAppearance()` (`src/app/telegram.ts`) derives both
+from `@twa-dev/sdk`'s `WebApp.platform`/`WebApp.colorScheme` and re-reads appearance on Telegram's
+`themeChanged` event. **Any screen added later must render inside `AppRoot` (it already does, by
+virtue of being routed inside `AppShell`) — don't reach for the kit's components outside that tree,
+their styling depends on `AppRoot`'s context.**
+
+Import `@telegram-apps/telegram-ui/dist/styles.css` once near the root (already done in `App.tsx`,
+before `./App.css` so local overrides still win the cascade).
+
 ## Telegram WebApp bootstrap
 
 `src/app/telegram.ts` wraps `@twa-dev/sdk`. `bootstrapTelegram()` (called once in `main.tsx`) calls
 `WebApp.ready()`/`expand()` and maps Telegram's theme params onto CSS vars
-(`--tg-theme-bg-color`, `--tg-theme-button-color`, etc.), which `src/App.css` consumes so the app
-follows the host Telegram client's light/dark theme instead of looking like a bare webpage.
+(`--tg-theme-bg-color`, `--tg-theme-button-color`, etc.) on `<html>`. `src/App.css`/`src/index.css`
+consume those directly for the few bits of layout the kit doesn't own, and — importantly —
+telegram-ui's own `--tgui--*` design tokens (`AppRoot`'s CSS) default to reading the *same*
+`--tg-theme-*` vars (e.g. `--tgui--bg_color: var(--tg-theme-bg-color, #fff)`), so this one bit of
+bootstrap code feeds both the legacy vars and the new kit's palette with the host Telegram client's
+real per-user theme colors, not just a light/dark boolean.
 
 `getTelegramInitData()` returns the raw, still-signed `initData` string, sent as an
 `X-Telegram-Init-Data` header on API calls (see `src/api/client.ts`) — the backend re-validates it
@@ -73,13 +100,31 @@ since wallets validate the manifest's `url` against the page origin. Update this
 
 ## Screens
 
+Per `TON_Relics_Technical_Spec_v0.5.docx` §23 the intended flow is Landing → Scanning → Reveal;
+today that maps to Connect → Scanning → Profile (Profile stands in for "Reveal" until the real
+scoring engine exists server-side). `src/App.tsx` hides the `Tabbar` while on `/scanning` so the
+user isn't tempted to bail into another tab mid-scan.
+
 - **Connect** (`src/features/connect`) — value prop copy (RU/EN), `TonConnectButton`, a static
-  sample score card (mock data, not wired to any API).
+  sample score card (mock data, not wired to any API). Once connected and `ton_proof`-verified
+  (via the shared `useVerifiedProfile` hook, see below), shows a "Generate"/"Сгенерировать" button
+  that navigates to `/scanning`.
+- **Scanning** (`src/features/scanning`) — animated progress screen (kit `Spinner` + `Progress` +
+  a rotating status line cycling through `scanning.steps.0..6`), reached from Connect's "Generate"
+  button, auto-navigates to `/profile` when done (or immediately on "Skip"). **This is a UI-only
+  simulation** — `src/features/scanning/useScanProgress.ts` drives it off a `setInterval` sized to
+  land in the product spec's real 60-120s deep-scan window (currently ~75s), because there is no
+  backend scan/scoring endpoint yet (that's its own much larger milestone: TON Center ingestion,
+  transaction canonicalization, the real scoring formula). `ScanningScreen.tsx` only ever reads
+  `{ stepIndex, progressPct, done }` and calls `skip()` from that hook, so swapping the simulated
+  timer for a real `GET /wallets/:address/scan-status`-style poll later is a one-file change.
 - **Profile** (`src/features/profile`) — after connect, runs the `ton_proof` flow
-  (`src/ton/useTonProof.ts`): fetches a challenge payload from the backend, attaches it to
-  TonConnect's connect request via `setConnectRequestParameters` so the wallet signs it as part of
-  connecting, then POSTs the signed proof to the backend for verification. Shows a score bar +
-  "coming soon" placeholder on success (backend has no real scoring yet).
+  (`src/ton/useTonProof.ts`) via the shared `src/ton/useVerifiedProfile.ts` hook (also used by
+  Connect to gate the "Generate" button, so both screens agree on one verify-on-connect flow):
+  fetches a challenge payload from the backend, attaches it to TonConnect's connect request via
+  `setConnectRequestParameters` so the wallet signs it as part of connecting, then POSTs the signed
+  proof to the backend for verification. Shows a score bar + "coming soon" placeholder on success
+  (backend has no real scoring yet).
 - **Mint** (`src/features/mint`) — "Mint TON Passport (testnet)" for category `MAIN`. Calls
   `GET /passports/MAIN/mint/prepare`, gets back `{ permit, signature, collectionAddress }`, and
   drives an idle → preparing → pending → success/error UI state machine around
@@ -119,6 +164,8 @@ since wallets validate the manifest's `url` against the page origin. Update this
 - [ ] Point `public/tonconnect-manifest.json` and `.env.example` at the real deploy domain.
 - [ ] Wire the real score/domain-card data into Profile once the scoring engine exists
       (`SCORING.md`, not yet written per `ARCHITECTURE.md`).
+- [ ] Replace the simulated timer in `src/features/scanning/useScanProgress.ts` with a real
+      scan-status poll once the backend exposes one — `ScanningScreen.tsx` shouldn't need to change.
 - [ ] Consider code-splitting (`vite build` currently warns about a >500kB chunk — fine for MVP,
       worth revisiting before a real launch).
 

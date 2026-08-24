@@ -1,79 +1,72 @@
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Section, Cell, Avatar, Spinner, Button } from "@telegram-apps/telegram-ui";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
-import { useTonProof } from "../../ton/useTonProof";
+import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
 import { ScoreBar } from "../../shared/ScoreBar";
 import { TestnetGuard } from "../../shared/TestnetGuard";
-import type { TonProofVerifyResponse } from "../../api/client";
-
-type VerifyState =
-  | { status: "idle" }
-  | { status: "verifying" }
-  | { status: "success"; data: TonProofVerifyResponse }
-  | { status: "error" };
 
 export function ProfileScreen() {
   const { t } = useTranslation();
-  const { isConnected, address, tonConnectUI } = useTonConnectAccount();
-  const { verify, hasProof } = useTonProof();
-  const [state, setState] = useState<VerifyState>({ status: "idle" });
-
-  useEffect(() => {
-    if (!isConnected || !hasProof || state.status !== "idle") return;
-
-    setState({ status: "verifying" });
-    verify()
-      .then((data) => setState({ status: "success", data }))
-      .catch(() => setState({ status: "error" }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConnected, hasProof]);
+  const { address, tonConnectUI } = useTonConnectAccount();
+  const { isConnected, hasProof, state, retry } = useVerifiedProfile();
 
   if (!isConnected) {
     return (
       <div className="screen profile-screen">
-        <h1>{t("profile.title")}</h1>
-        <p>{t("mint.notConnected")}</p>
+        <Section header={t("profile.title")}>
+          <Cell>{t("mint.notConnected")}</Cell>
+        </Section>
       </div>
     );
   }
 
   return (
     <div className="screen profile-screen">
-      <h1>{t("profile.title")}</h1>
+      <Section header={t("profile.title")}>
+        <Cell before={<Avatar size={40} acronym={acronymFor(address)} />} subtitle={t("profile.walletLabel")}>
+          <span className="mono">{shortAddress(address)}</span>
+        </Cell>
+      </Section>
+
       <TestnetGuard />
 
-      <div className="wallet-row">
-        <span className="wallet-label">{t("profile.walletLabel")}</span>
-        <span className="wallet-address">{shortAddress(address)}</span>
-      </div>
-
-      {state.status === "verifying" && <p className="hint">{t("profile.verifying")}</p>}
+      {state.status === "verifying" && (
+        <Section>
+          <Cell before={<Spinner size="s" />}>{t("profile.verifying")}</Cell>
+        </Section>
+      )}
 
       {state.status === "error" && (
-        <div className="error-box">
-          <p>{t("profile.verifyError")}</p>
-          <button type="button" onClick={() => setState({ status: "idle" })}>
-            {t("profile.retry")}
-          </button>
-        </div>
+        <Section footer={t("profile.verifyError")}>
+          <Cell
+            after={
+              <Button size="s" mode="outline" onClick={retry}>
+                {t("profile.retry")}
+              </Button>
+            }
+          >
+            {t("common.error")}
+          </Cell>
+        </Section>
       )}
 
       {state.status === "success" && (
-        <>
-          <ScoreBar score={state.data.profile.scoreDisplay ?? 0} label={t("profile.scoreLabel")} />
-          <p className="hint">{t("profile.comingSoon")}</p>
-        </>
+        <Section footer={t("profile.comingSoon")}>
+          <div className="sample-card-body">
+            <ScoreBar score={state.data.profile.scoreDisplay ?? 0} label={t("profile.scoreLabel")} />
+          </div>
+        </Section>
       )}
 
       {state.status === "idle" && !hasProof && (
         // Wallet connected without a ton_proof result yet (e.g. proof payload fetch
         // failed and connect proceeded without it) — nothing to verify against.
-        <p className="hint">{t("profile.verifyError")}</p>
+        <Section footer={t("profile.verifyError")} />
       )}
 
-      <button type="button" className="secondary-btn" onClick={() => tonConnectUI.disconnect()}>
+      <Button mode="outline" stretched onClick={() => tonConnectUI.disconnect()}>
         {t("profile.disconnect")}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -81,4 +74,8 @@ export function ProfileScreen() {
 function shortAddress(address: string): string {
   if (!address) return "";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function acronymFor(address: string): string {
+  return address ? address.slice(2, 4).toUpperCase() : "??";
 }

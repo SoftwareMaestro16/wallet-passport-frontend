@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { SegmentedControl } from "@telegram-apps/telegram-ui";
 import { setLanguage } from "../app/i18n";
 
 export function LanguageSwitcher() {
@@ -6,21 +7,13 @@ export function LanguageSwitcher() {
   const current = i18n.language === "ru" ? "ru" : "en";
 
   return (
-    <div className="lang-switcher" role="group" aria-label="Language">
-      <button
-        type="button"
-        className={current === "ru" ? "lang-btn active" : "lang-btn"}
-        onClick={() => setLanguage("ru")}
-      >
+    <SegmentedControl>
+      <SegmentedControl.Item selected={current === "ru"} onClick={() => setLanguage("ru")}>
         RU
-      </button>
-      <button
-        type="button"
-        className={current === "en" ? "lang-btn active" : "lang-btn"}
-        onClick={() => setLanguage("en")}
-      >
+      </SegmentedControl.Item>
+      <SegmentedControl.Item selected={current === "en"} onClick={() => setLanguage("en")}>
         EN
-      </button>
-    </div>
+      </SegmentedControl.Item>
+    </SegmentedControl>
   );
 }

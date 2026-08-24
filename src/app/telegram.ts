@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import WebApp from "@twa-dev/sdk";
 
 /**
@@ -64,6 +65,45 @@ export function getTelegramInitData(): string {
   } catch {
     return "";
   }
+}
+
+function resolvePlatform(): "ios" | "base" {
+  try {
+    // telegram-ui's AppRoot only distinguishes "ios" vs "base" (everything else renders the
+    // Android/desktop/web look, which is closest to how those Telegram clients actually render).
+    return WebApp.platform === "ios" ? "ios" : "base";
+  } catch {
+    return "base";
+  }
+}
+
+function resolveAppearance(): "light" | "dark" {
+  try {
+    return WebApp.colorScheme === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+/**
+ * Feeds `AppRoot` (`@telegram-apps/telegram-ui`) the host client's real platform/appearance
+ * instead of letting it guess from `prefers-color-scheme`. Platform can't change mid-session;
+ * appearance is re-read on Telegram's `themeChanged` event, same trigger `applyThemeVars` uses.
+ */
+export function useTelegramAppearance(): { platform: "ios" | "base"; appearance: "light" | "dark" } {
+  const [appearance, setAppearance] = useState(resolveAppearance);
+
+  useEffect(() => {
+    const handler = () => setAppearance(resolveAppearance());
+    try {
+      WebApp.onEvent("themeChanged", handler);
+      return () => WebApp.offEvent("themeChanged", handler);
+    } catch {
+      return undefined;
+    }
+  }, []);
+
+  return { platform: resolvePlatform(), appearance };
 }
 
 export { WebApp };

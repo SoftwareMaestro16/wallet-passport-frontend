@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@telegram-apps/telegram-ui": "^2.1.13",
     "@ton/core": "^0.63.1",
     "@tonconnect/sdk": "^4.0.2",
     "@tonconnect/ui-react": "^3.0.2",

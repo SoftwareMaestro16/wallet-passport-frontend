@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Section, Cell, Button, Spinner } from "@telegram-apps/telegram-ui";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { getTelegramInitData } from "../../app/telegram";
 import { api, ApiError } from "../../api/client";
@@ -54,32 +55,43 @@ export function MintScreen() {
 
   return (
     <div className="screen mint-screen">
-      <h1>{t("mint.title")}</h1>
-      <p>{t("mint.description")}</p>
+      <Section header={t("mint.title")} footer={t("mint.description")} />
+
       <TestnetGuard />
 
-      {!isConnected && <p className="hint">{t("mint.notConnected")}</p>}
+      <Section>
+        {!isConnected && <Cell>{t("mint.notConnected")}</Cell>}
 
-      {state.status !== "error" && (
-        <button type="button" className="primary-btn" disabled={!isConnected || isBusy} onClick={handleMint}>
-          {t("mint.mintButton")}
-        </button>
-      )}
+        {state.status !== "error" && (
+          <div className="mint-action">
+            <Button size="l" stretched loading={isBusy} disabled={!isConnected || isBusy} onClick={handleMint}>
+              {t("mint.mintButton")}
+            </Button>
+          </div>
+        )}
 
-      {state.status === "error" && (
-        <div className="error-box">
-          <p>{state.message}</p>
-          <button type="button" onClick={handleMint}>
-            {t("mint.retry")}
-          </button>
-        </div>
-      )}
+        {state.status === "error" && (
+          <Cell
+            multiline
+            after={
+              <Button size="s" mode="outline" onClick={handleMint}>
+                {t("mint.retry")}
+              </Button>
+            }
+          >
+            {state.message}
+          </Cell>
+        )}
+      </Section>
 
-      <p className="hint status-line">
-        {state.status === "idle" && t("mint.statusIdle")}
-        {(state.status === "preparing" || state.status === "pending") && t("mint.statusPending")}
-        {state.status === "success" && t("mint.statusSuccess")}
-      </p>
+      <Section>
+        <Cell before={isBusy ? <Spinner size="s" /> : undefined}>
+          {state.status === "idle" && t("mint.statusIdle")}
+          {isBusy && t("mint.statusPending")}
+          {state.status === "success" && t("mint.statusSuccess")}
+          {state.status === "error" && t("common.error")}
+        </Cell>
+      </Section>
     </div>
   );
 }

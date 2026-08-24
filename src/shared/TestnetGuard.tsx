@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Banner } from "@telegram-apps/telegram-ui";
 import { useTonConnectAccount } from "../ton/useTonConnectAccount";
 
 /**
@@ -12,5 +13,5 @@ export function TestnetGuard() {
 
   if (!isConnected || isTestnet) return null;
 
-  return <div className="testnet-warning">{t("testnetGuard.warning")}</div>;
+  return <Banner type="inline" before="⚠️" header={t("testnetGuard.warning")} />;
 }

@@ -5,7 +5,22 @@
     "connectButton": "Connect Wallet",
     "sampleCardTitle": "Sample card",
     "sampleScoreLabel": "TON Score",
-    "testnetBadge": "Testnet"
+    "testnetBadge": "Testnet",
+    "generateButton": "Generate"
+  },
+  "scanning": {
+    "title": "Analyzing your wallet",
+    "subtitle": "This takes 1-2 minutes — we're reconstructing your full on-chain history.",
+    "steps": {
+      "0": "Loading wallet history...",
+      "1": "Searching transactions...",
+      "2": "Calculating volumes...",
+      "3": "Checking DeFi activity...",
+      "4": "Looking for NFTs and collectibles...",
+      "5": "Checking staking...",
+      "6": "Assembling your profile..."
+    },
+    "skip": "Skip"
   },
   "profile": {
     "title": "Profile",

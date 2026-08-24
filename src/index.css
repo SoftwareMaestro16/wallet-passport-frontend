@@ -16,16 +16,12 @@ body,
 
 body {
   font: 16px/1.45 var(--sans);
+  /* --tg-theme-* live on <html> (see applyThemeVars in src/app/telegram.ts), an ancestor of
+     <body> — safe to read here. telegram-ui's own --tgui--* vars live on a div *inside* body
+     (AppRoot), so they can't be read at this level; .app-shell references those instead. */
   background: var(--tg-theme-bg-color, #ffffff);
   color: var(--tg-theme-text-color, #111111);
   -webkit-font-smoothing: antialiased;
-}
-
-h1,
-h2,
-h3 {
-  margin: 0 0 8px;
-  color: var(--tg-theme-text-color, #111111);
 }
 
 p {
