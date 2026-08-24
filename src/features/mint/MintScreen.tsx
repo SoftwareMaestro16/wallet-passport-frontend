@@ -14,7 +14,10 @@ type MintState =
   | { status: "success"; txHash?: string }
   | { status: "error"; message: string };
 
-const CATEGORY = "MAIN" as const;
+// Must match a slug in server/src/domain/categories.ts's PASSPORT_CATEGORIES — "passport" is the
+// overall/MAIN category (categoryId 0, contracts' CATEGORY_MAIN). This previously said "MAIN",
+// which categorySlugToUint8() rejects with 400 on every request, blocking every mint attempt.
+const CATEGORY = "passport" as const;
 
 /** Backend error bodies are expected to be `{ message: string }` per TMAGUIDE.md conventions; fall back gracefully if not. */
 function backendErrorMessage(err: unknown): string | undefined {

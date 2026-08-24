@@ -5,11 +5,20 @@ import { Section, Cell, Button, Badge, Spinner } from "@telegram-apps/telegram-u
 import { ScoreBar } from "../../shared/ScoreBar";
 import { TestnetGuard } from "../../shared/TestnetGuard";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
+import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
+import { useWalletProfile } from "../profile/useWalletProfile";
 
 export function ConnectScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { isConnected, state, retry } = useVerifiedProfile();
+  const { address } = useTonConnectAccount();
+  // Only matters once ton_proof has verified this wallet — a completed scan for THIS address
+  // (200) flips the button to "Update Passport"; no scan yet (409) or unknown keeps "Scan Wallet".
+  const { state: walletProfileState } = useWalletProfile(
+    isConnected && state.status === "success" ? address : undefined,
+  );
+  const hasCompletedScan = walletProfileState.status === "ready";
 
   return (
     <div className="screen connect-screen">
@@ -71,7 +80,7 @@ export function ConnectScreen() {
       {isConnected && state.status === "success" && (
         <div className="connect-generate">
           <Button size="l" stretched onClick={() => navigate("/scanning")}>
-            {t("connect.generateButton")}
+            {hasCompletedScan ? t("connect.updateButton") : t("connect.scanButton")}
           </Button>
         </div>
       )}

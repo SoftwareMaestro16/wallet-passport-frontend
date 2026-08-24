@@ -1,19 +1,25 @@
-import { Address, beginCell } from "@ton/core";
+import { Address, beginCell, Cell } from "@ton/core";
 import type { MintPermit, MintPrepareResponse } from "../../api/client";
 
 /**
- * Builds the TonConnect `sendTransaction` request for the `MintOrRefresh` message, per
- * contracts/DESIGN.md §5:
+ * Builds the TonConnect `sendTransaction` request for the `MintOrRefresh` message, per the ACTUAL
+ * deployed contract's struct (contracts/src/common/messages.tolk — DESIGN.md's §5 code block
+ * predates the `content` field being added and is stale on this point):
  *
  *   struct (0x70617373) MintOrRefresh {
  *       queryId: uint64
  *       permit: Cell<Permit>   // separate ref cell
  *       signature: bits512
+ *       content: cell          // TEP-64 on-chain content cell; permit.metadataHash == content.hash()
  *   }
  *
- * The client never signs anything — it only reconstructs the exact Permit cell the backend
- * already hashed and signed (see buildPermitCell below) and wraps it with the backend-provided
- * signature bytes, unmodified, into this envelope.
+ * The client never signs anything and never builds the content cell itself — it only
+ * reconstructs the exact Permit cell the backend already hashed and signed (see buildPermitCell
+ * below), and attaches the backend-provided `content` BOC (`MintPrepareResponse.content`)
+ * byte-for-byte unmodified. Re-encoding `content` client-side (even to a semantically identical
+ * cell) would change its hash and break the on-chain `content.hash() == permit.metadataHash`
+ * check, which is exactly why the backend ships the already-built cell as opaque bytes rather
+ * than a JSON shape the client would have to re-serialize.
  *
  * Permit itself is split head + 2 refs per contracts/DESIGN.md §5.1 / contracts/src/common/
  * messages.tolk (locked layout — a flat single-cell Permit overflows the 1023-bit limit):
@@ -61,11 +67,16 @@ function buildMintOrRefreshCell(prepared: MintPrepareResponse) {
     throw new Error(`Expected a 64-byte (512-bit) Ed25519 signature, got ${signature.length} bytes`);
   }
 
+  // Parsed unmodified from the backend's BOC — see MintPrepareResponse.content's doc comment for
+  // why this must never be re-derived/re-encoded client-side.
+  const contentCell = Cell.fromBoc(Buffer.from(prepared.content, "base64"))[0];
+
   return beginCell()
     .storeUint(MINT_OR_REFRESH_OPCODE, 32)
     .storeUint(0, 64) // queryId — no client-side correlation needed yet, always 0 until a UI use case requires it
     .storeRef(buildPermitCell(prepared.permit))
     .storeBuffer(Buffer.from(signature))
+    .storeRef(contentCell)
     .endCell();
 }
 

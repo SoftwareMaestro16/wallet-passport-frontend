@@ -128,6 +128,123 @@ export interface MintPrepareResponse {
   content: string;
 }
 
+// ---- Wallet scan / profile / passports (Scan Wallet feature) ---------------
+// Shapes mirror server/src/http/routes/wallets.ts and server/src/domain/metrics/{score,rawStats}.ts
+// directly (read there before changing these, they are not guesses).
+
+export type ScanJobStatus = "PENDING" | "RUNNING" | "DONE" | "FAILED";
+
+export interface ScanStartResponse {
+  jobId: string;
+  status: ScanJobStatus;
+  walletAddress: string;
+}
+
+export interface ScanStatusResponse {
+  jobId: string;
+  walletAddress: string;
+  status: ScanJobStatus;
+  txFetched: number;
+  txTotal: number | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  error: string | null;
+  /**
+   * Being added concurrently server-side alongside this client work — may be briefly absent
+   * during rollout (older ScanJob rows, or a server build that hasn't shipped it yet). Every
+   * reader of this field must treat `undefined` as "no phase signal", never as an error.
+   */
+  phase?: string;
+}
+
+export type ScoreFactorCode = "A" | "C" | "E" | "O" | "D" | "N" | "S" | "B";
+
+export interface ScoreFactor {
+  code: ScoreFactorCode;
+  factor: string;
+  value: number;
+}
+
+export interface WalletScoreResult {
+  tonScore: number; // 0..1000
+  tier: string;
+  core: number;
+  specialization: number;
+  base: number;
+  factors: ScoreFactor[];
+}
+
+export interface DataConfidence {
+  jettonDataAvailable: boolean;
+  nftDataAvailable: boolean;
+  stakingDataAvailable: boolean;
+  overallScore: number;
+}
+
+export interface RawWalletStats {
+  walletAddress: string;
+  firstTxAt: string | null;
+  walletAgeDays: number;
+  activeDaysCount: number;
+  activeMonthsCount: number;
+  totalTxCount: number;
+  successfulTxCount: number;
+  uniqueCounterpartyCount: number;
+  uniqueContractLikeCount: number;
+  deploymentCount: number;
+  feesPaidNanoTon: string;
+  rawInboundNanoTon: string;
+  rawOutboundNanoTon: string;
+  economicVolumeNanoTon: string;
+  jettonTransferCount: number;
+  jettonBurnCount: number;
+  uniqueJettonMasterCount: number;
+  nftTransferCount: number;
+  uniqueNftCollectionCount: number;
+  stakingPositionCount: number;
+  dataConfidence: DataConfidence;
+}
+
+export interface WalletProfileResponse {
+  walletAddress: string;
+  isOwnWallet: boolean;
+  scan: {
+    jobId: string;
+    scanUpperLt: string | null;
+    completedAt: string | null;
+  };
+  score: WalletScoreResult;
+  stats: RawWalletStats;
+}
+
+/**
+ * `GET /wallets/:address/passports` is being added concurrently by another agent and may 404
+ * until it ships — every caller must treat that as "hide the section", never a crash.
+ */
+export type PassportCategoryName =
+  | "MAIN"
+  | "PIONEER"
+  | "OPERATOR"
+  | "DEFI"
+  | "COLLECTOR"
+  | "STAKER"
+  | "BUILDER";
+
+export interface WalletPassportCategoryStatus {
+  categoryId: string;
+  category: PassportCategoryName;
+  eligible: boolean;
+  exists: boolean;
+  revision: number;
+  canMint: boolean;
+  canRefresh: boolean;
+}
+
+export interface WalletPassportsResponse {
+  walletAddress: string;
+  categories: WalletPassportCategoryStatus[];
+}
+
 export const api = {
   getTonProofPayload: (initData: string) =>
     apiClient.get<TonProofPayloadResponse>("/auth/ton-proof/payload", { initData }),
@@ -137,4 +254,16 @@ export const api = {
 
   prepareMint: (category: "passport", initData: string) =>
     apiClient.get<MintPrepareResponse>(`/passports/${category}/mint/prepare`, { initData }),
+
+  startWalletScan: (address: string) =>
+    apiClient.post<ScanStartResponse>(`/wallets/${encodeURIComponent(address)}/scan`),
+
+  getScanStatus: (address: string) =>
+    apiClient.get<ScanStatusResponse>(`/wallets/${encodeURIComponent(address)}/scan-status`),
+
+  getWalletProfile: (address: string) =>
+    apiClient.get<WalletProfileResponse>(`/wallets/${encodeURIComponent(address)}/profile`),
+
+  getWalletPassports: (address: string) =>
+    apiClient.get<WalletPassportsResponse>(`/wallets/${encodeURIComponent(address)}/passports`),
 };
