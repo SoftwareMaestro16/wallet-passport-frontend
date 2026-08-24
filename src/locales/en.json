@@ -1,0 +1,39 @@
+{
+  "connect": {
+    "title": "Wallet Passport",
+    "valueProp": "A transparent TON passport for your wallet: age, activity and reputation — built from on-chain history, no manual input.",
+    "connectButton": "Connect Wallet",
+    "sampleCardTitle": "Sample card",
+    "sampleScoreLabel": "TON Score",
+    "testnetBadge": "Testnet"
+  },
+  "profile": {
+    "title": "Profile",
+    "verifying": "Verifying wallet signature...",
+    "verifyError": "Could not verify wallet ownership. Try reconnecting.",
+    "retry": "Retry",
+    "scoreLabel": "TON Score",
+    "comingSoon": "Detailed stats coming soon",
+    "walletLabel": "Wallet",
+    "disconnect": "Disconnect"
+  },
+  "mint": {
+    "title": "Mint",
+    "description": "Mint your TON Passport (MAIN category) on testnet.",
+    "mintButton": "Mint TON Passport (testnet)",
+    "statusIdle": "Ready to mint",
+    "statusPending": "Waiting for wallet confirmation...",
+    "statusSuccess": "Transaction sent! Your passport will appear once confirmed on-chain.",
+    "statusError": "Could not prepare the transaction. Please try again.",
+    "notConnected": "Connect your wallet first"
+  },
+  "nav": {
+    "connect": "Wallet",
+    "profile": "Profile",
+    "mint": "Mint"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error"
+  }
+}

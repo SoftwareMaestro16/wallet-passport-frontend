@@ -1,0 +1,39 @@
+{
+  "connect": {
+    "title": "Wallet Passport",
+    "valueProp": "Прозрачный TON-паспорт вашего кошелька: возраст, активность и репутация — на основе истории в сети, без ручного ввода.",
+    "connectButton": "Подключить кошелёк",
+    "sampleCardTitle": "Пример карточки",
+    "sampleScoreLabel": "TON Score",
+    "testnetBadge": "Тестовая сеть (testnet)"
+  },
+  "profile": {
+    "title": "Профиль",
+    "verifying": "Проверяем подпись кошелька...",
+    "verifyError": "Не удалось подтвердить владение кошельком. Попробуйте переподключиться.",
+    "retry": "Повторить",
+    "scoreLabel": "TON Score",
+    "comingSoon": "Подробная статистика скоро появится",
+    "walletLabel": "Кошелёк",
+    "disconnect": "Отключить"
+  },
+  "mint": {
+    "title": "Mint",
+    "description": "Выпустите свой TON Passport (категория MAIN) в тестовой сети.",
+    "mintButton": "Mint TON Passport (testnet)",
+    "statusIdle": "Готово к выпуску",
+    "statusPending": "Ожидаем подтверждения в кошельке...",
+    "statusSuccess": "Транзакция отправлена! Паспорт появится после подтверждения в сети.",
+    "statusError": "Не удалось подготовить транзакцию. Попробуйте ещё раз.",
+    "notConnected": "Сначала подключите кошелёк"
+  },
+  "nav": {
+    "connect": "Кошелёк",
+    "profile": "Профиль",
+    "mint": "Mint"
+  },
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Ошибка"
+  }
+}

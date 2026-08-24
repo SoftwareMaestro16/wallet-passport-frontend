@@ -1,0 +1,218 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--tg-theme-bg-color, #ffffff);
+}
+
+.app-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 16px 0;
+}
+
+.app-main {
+  flex: 1;
+  padding: 8px 16px 16px;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.badge {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--tg-theme-button-text-color, #fff);
+  background: var(--tg-theme-button-color, #2ea6ff);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.value-prop {
+  color: var(--tg-theme-hint-color, #707579);
+  font-size: 15px;
+}
+
+.connect-cta {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.sample-card {
+  border: 1px solid var(--tg-theme-hint-color, #e5e5e5);
+  border-radius: 16px;
+  padding: 16px;
+  background: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sample-card-title {
+  font-size: 13px;
+  color: var(--tg-theme-hint-color, #707579);
+  margin: 0;
+}
+
+.sample-card-address {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 13px;
+  color: var(--tg-theme-hint-color, #707579);
+}
+
+.score-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.score-bar-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--tg-theme-hint-color, #707579);
+}
+
+.score-bar-value {
+  font-weight: 600;
+  color: var(--tg-theme-text-color, #111);
+}
+
+.score-bar-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(120, 120, 128, 0.16);
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--tg-theme-button-color, #2ea6ff);
+  transition: width 0.3s ease;
+}
+
+.wallet-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.wallet-label {
+  color: var(--tg-theme-hint-color, #707579);
+}
+
+.wallet-address {
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--tg-theme-hint-color, #707579);
+}
+
+.status-line {
+  min-height: 18px;
+}
+
+.error-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 59, 48, 0.08);
+  color: #d70015;
+  font-size: 14px;
+}
+
+.testnet-warning {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 149, 0, 0.12);
+  color: #a15c00;
+  font-size: 13px;
+}
+
+.primary-btn,
+.secondary-btn,
+.error-box button {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.primary-btn {
+  background: var(--tg-theme-button-color, #2ea6ff);
+  color: var(--tg-theme-button-text-color, #fff);
+}
+
+.primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.secondary-btn,
+.error-box button {
+  background: transparent;
+  color: var(--tg-theme-link-color, #2ea6ff);
+  border: 1px solid var(--tg-theme-hint-color, #e5e5e5);
+}
+
+.lang-switcher {
+  display: inline-flex;
+  border-radius: 999px;
+  background: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  padding: 2px;
+}
+
+.lang-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tg-theme-hint-color, #707579);
+}
+
+.lang-btn.active {
+  background: var(--tg-theme-button-color, #2ea6ff);
+  color: var(--tg-theme-button-text-color, #fff);
+}
+
+.bottom-nav {
+  display: flex;
+  border-top: 1px solid var(--tg-theme-hint-color, #e5e5e5);
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+}
+
+.nav-item {
+  flex: 1;
+  text-align: center;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--tg-theme-hint-color, #707579);
+  border-radius: 10px;
+}
+
+.nav-item.active {
+  color: var(--tg-theme-link-color, #2ea6ff);
+  background: var(--tg-theme-secondary-bg-color, #f4f4f5);
+}
