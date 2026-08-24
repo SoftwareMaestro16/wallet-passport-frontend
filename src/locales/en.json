@@ -26,6 +26,7 @@
     "title": "Profile",
     "verifying": "Verifying wallet signature...",
     "verifyError": "Could not verify wallet ownership. Try reconnecting.",
+    "backendUnreachable": "Server unreachable. Check your connection and try again.",
     "retry": "Retry",
     "scoreLabel": "TON Score",
     "comingSoon": "Detailed stats coming soon",

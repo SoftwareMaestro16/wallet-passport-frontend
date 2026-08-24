@@ -40,6 +40,20 @@ export function ConnectScreen() {
         </Section>
       )}
 
+      {isConnected && state.status === "backend-unreachable" && (
+        <Section footer={t("profile.backendUnreachable")}>
+          <Cell
+            after={
+              <Button size="s" mode="outline" onClick={retry}>
+                {t("profile.retry")}
+              </Button>
+            }
+          >
+            {t("common.error")}
+          </Cell>
+        </Section>
+      )}
+
       {isConnected && state.status === "error" && (
         <Section footer={t("profile.verifyError")}>
           <Cell

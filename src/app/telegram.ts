@@ -77,9 +77,24 @@ function resolvePlatform(): "ios" | "base" {
   }
 }
 
+/**
+ * Derived from `themeParams.bg_color`'s luminance rather than trusting `WebApp.colorScheme`
+ * directly: `applyThemeVars` (the mechanism the rest of the app's CSS relies on) only ever reads
+ * `themeParams`, and on at least one real Telegram client `colorScheme` disagreed with the actual
+ * (correctly dark) `bg_color` — leaving `AppRoot`'s own components (SegmentedControl, Section,
+ * etc.) stuck light against an otherwise-dark app. Computing both from the same field guarantees
+ * they can't diverge again.
+ */
 function resolveAppearance(): "light" | "dark" {
   try {
-    return WebApp.colorScheme === "dark" ? "dark" : "light";
+    const hex = WebApp.themeParams.bg_color;
+    if (!hex) return WebApp.colorScheme === "dark" ? "dark" : "light";
+
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance < 0.5 ? "dark" : "light";
   } catch {
     return "light";
   }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import type { TonProofItemReplySuccess } from "@tonconnect/ui-react";
 import { api } from "../api/client";
@@ -22,17 +22,22 @@ export function useTonProof() {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
   const payloadRef = useRef<string | null>(null);
+  const [payloadError, setPayloadError] = useState(false);
 
   const refreshPayload = useCallback(async () => {
     try {
+      setPayloadError(false);
       tonConnectUI.setConnectRequestParameters({ state: "loading" });
       const { payload } = await api.getTonProofPayload(getTelegramInitData());
       payloadRef.current = payload;
       tonConnectUI.setConnectRequestParameters({ state: "ready", value: { tonProof: payload } });
     } catch {
-      // Backend unreachable (e.g. local dev without server running) — clear the loading
-      // state so the wallet can still connect without a proof, and let the caller retry.
+      // Backend unreachable (wrong VITE_API_BASE_URL, server down, etc.) — clear the loading
+      // state so the wallet can still connect without a proof, but surface this loudly instead
+      // of silently degrading: a wallet connected without a proof can never pass verification,
+      // so the "Generate" button would otherwise just never appear with zero explanation.
       tonConnectUI.setConnectRequestParameters(null);
+      setPayloadError(true);
     }
   }, [tonConnectUI]);
 
@@ -64,5 +69,10 @@ export function useTonProof() {
     );
   }, [wallet, tonProofResult]);
 
-  return { refreshPayload, verify, hasProof: Boolean(tonProofResult && "proof" in tonProofResult) };
+  return {
+    refreshPayload,
+    verify,
+    hasProof: Boolean(tonProofResult && "proof" in tonProofResult),
+    payloadError,
+  };
 }

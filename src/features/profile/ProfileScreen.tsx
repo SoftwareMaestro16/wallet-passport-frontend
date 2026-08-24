@@ -8,7 +8,7 @@ import { TestnetGuard } from "../../shared/TestnetGuard";
 export function ProfileScreen() {
   const { t } = useTranslation();
   const { address, tonConnectUI } = useTonConnectAccount();
-  const { isConnected, hasProof, state, retry } = useVerifiedProfile();
+  const { isConnected, state, retry } = useVerifiedProfile();
 
   if (!isConnected) {
     return (
@@ -58,10 +58,18 @@ export function ProfileScreen() {
         </Section>
       )}
 
-      {state.status === "idle" && !hasProof && (
-        // Wallet connected without a ton_proof result yet (e.g. proof payload fetch
-        // failed and connect proceeded without it) — nothing to verify against.
-        <Section footer={t("profile.verifyError")} />
+      {state.status === "backend-unreachable" && (
+        <Section footer={t("profile.backendUnreachable")}>
+          <Cell
+            after={
+              <Button size="s" mode="outline" onClick={retry}>
+                {t("profile.retry")}
+              </Button>
+            }
+          >
+            {t("common.error")}
+          </Cell>
+        </Section>
       )}
 
       <Button mode="outline" stretched onClick={() => tonConnectUI.disconnect()}>
