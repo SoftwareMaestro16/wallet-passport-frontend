@@ -60,6 +60,11 @@ export const apiClient = {
 // Shapes mirror ARCHITECTURE.md §5 (signed-authorization flow) and the TonConnect
 // ton_proof flow from TMAGUIDE.md §3. Adjust once server/src/http routes are finalized.
 
+export interface TelegramAuthResponse {
+  user: { id: string; username: string | null; referralCode: string };
+  expiresAt: string;
+}
+
 export interface TonProofPayloadResponse {
   payload: string;
 }
@@ -251,8 +256,15 @@ export interface WalletPassportsResponse {
 }
 
 export const api = {
+  // Must succeed before verifyTonProof: that route requires an existing session cookie, which
+  // only this call issues (see server/src/http/routes/auth.ts). initData is sent as a header on
+  // every request already, but nothing lazily creates the session/user from it — this is the one
+  // explicit login step.
+  telegramAuth: (initData: string) =>
+    apiClient.post<TelegramAuthResponse>("/auth/telegram", { initData }, { initData }),
+
   getTonProofPayload: (initData: string) =>
-    apiClient.get<TonProofPayloadResponse>("/auth/ton-proof/payload", { initData }),
+    apiClient.post<TonProofPayloadResponse>("/auth/ton-proof/payload", undefined, { initData }),
 
   verifyTonProof: (payload: TonProofVerifyRequest, initData: string) =>
     apiClient.post<TonProofVerifyResponse>("/auth/ton-proof/verify", payload, { initData }),

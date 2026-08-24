@@ -28,6 +28,11 @@ export function useTonProof() {
     try {
       setPayloadError(false);
       tonConnectUI.setConnectRequestParameters({ state: "loading" });
+      // verifyTonProof requires an existing session cookie (server/src/http/routes/auth.ts) that
+      // only this call issues — must happen before the wallet ever reaches verify(), so it's
+      // bundled into the same mount-time effect that fetches the proof payload rather than a
+      // separate step that could race with connecting.
+      await api.telegramAuth(getTelegramInitData());
       const { payload } = await api.getTonProofPayload(getTelegramInitData());
       payloadRef.current = payload;
       tonConnectUI.setConnectRequestParameters({ state: "ready", value: { tonProof: payload } });
