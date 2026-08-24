@@ -76,9 +76,42 @@ export interface TonProofVerifyResponse {
   };
 }
 
+/**
+ * Flat API shape for the `Permit` struct in contracts/DESIGN.md §5.1 / contracts/src/common/
+ * messages.tolk. `mintTx.ts` groups these fields into the locked 3-cell (head + PermitIdentity
+ * ref + PermitAudit ref) layout when building the on-chain cell — the wire/API shape doesn't
+ * need to mirror the cell grouping, only the cell-building code does.
+ */
+export interface MintPermit {
+  /** Deploy-time config echoed by the backend (contracts/DESIGN.md §5.1) — never hardcode. */
+  protocolId: number;
+  /** Deploy-time chain id echoed by the backend (contracts/DESIGN.md §5.1) — never hardcode. */
+  networkId: number;
+  collectionAddress: string;
+  ownerWallet: string;
+  /** ACTION_MINT = 1 | ACTION_REFRESH = 2 (uint8, contracts/src/common/messages.tolk). */
+  action: number;
+  categoryId: number;
+  expectedRevision: number;
+  newRevision: number;
+  /** 256-bit values as 64-char hex strings (no 0x prefix). */
+  metadataHash: string;
+  snapshotHash: string;
+  evidenceRoot: string;
+  /** Null when there's no referrer. */
+  referrerWallet: string | null;
+  /** nanoTON amounts as decimal strings (avoids float precision loss). */
+  referralReward: string;
+  mintPrice: string;
+  itemReserve: string;
+  requestId: string;
+  validSince: number;
+  validTill: number;
+}
+
 export interface MintPrepareResponse {
-  permit: string;
-  signature: string;
+  permit: MintPermit;
+  signature: string; // base64-encoded 512-bit Ed25519 signature
   collectionAddress: string;
 }
 

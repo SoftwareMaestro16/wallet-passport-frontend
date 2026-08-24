@@ -41,6 +41,9 @@ export function MintScreen() {
 
       setState({ status: "success", txHash: result.boc?.slice(0, 16) });
     } catch (err) {
+      // mintTx.ts can throw a non-ApiError (e.g. the Permit cell-overflow blocker documented
+      // there) — surface it in devtools since `state.message` below is a generic i18n string.
+      if (!(err instanceof ApiError)) console.error(err);
       const detail = backendErrorMessage(err) ?? (err instanceof ApiError ? `(${err.status})` : undefined);
       const message = detail ? `${t("mint.statusError")} ${detail}` : t("mint.statusError");
       setState({ status: "error", message });
