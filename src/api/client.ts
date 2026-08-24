@@ -27,6 +27,11 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   const res = await fetch(`${BASE_URL}${path}`, {
     ...rest,
+    // The API and this static frontend are on different origins by design (no shared domain),
+    // so the session cookie (server/src/auth/session.ts) needs an explicit opt-in to cross-origin
+    // credentials — the server's CORS config allows it for this exact origin, but the browser
+    // still won't attach/store the cookie without this on every request.
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...(initData ? { "X-Telegram-Init-Data": initData } : {}),
