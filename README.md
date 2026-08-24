@@ -130,23 +130,17 @@ user isn't tempted to bail into another tab mid-scan.
   drives an idle → preparing → pending → success/error UI state machine around
   `tonConnectUI.sendTransaction(...)`.
 
-  **Stubbed on purpose:** the cell-encoding is isolated in `src/features/mint/mintTx.ts`
-  (`buildMintTransactionRequest` / `encodeMintPayload`) — it does NOT build a real TON message
-  cell, it base64-encodes a JSON placeholder so the flow is exercisable end-to-end today.
-  `MintScreen.tsx` only imports `buildMintTransactionRequest` and never sees the encoding; it
-  owns the idle → preparing → pending → success/error state machine, backend error-message
-  surfacing (`err.body.message` when the API returns one, falling back to the HTTP status), and
-  a retry affordance on failure. The actual `mint_or_refresh` message body (opcode + permit cell
-  ref + signature ref, per `ARCHITECTURE.md` §5/§6) is being designed in parallel in
-  `contracts/`. Search for:
-
-  ```
-  // TODO: match PassportCollection mint_or_refresh message layout once contracts/README.md is available.
-  ```
-
-  Once `contracts/README.md` or `SMART-CONTRACTS.md` documents the real TL-B layout, replace the
-  stub in `mintTx.ts` with a proper `@ton/core` `beginCell()...endCell()` BOC — that file is the
-  only thing that should need to change.
+  The cell-encoding is isolated in `src/features/mint/mintTx.ts` (`buildMintTransactionRequest`)
+  — it builds a real `@ton/core` `beginCell()...endCell()` BOC for the `MintOrRefresh`
+  (`0x70617373`) message, matching the locked `Permit`/`PermitIdentity`/`PermitAudit` head+2-ref
+  cell layout in `contracts/DESIGN.md` §5.1 field-for-field (the client never signs anything —
+  it only reconstructs the exact `Permit` cell the backend already hashed and signed, and wraps
+  the backend-provided signature bytes around it unmodified). `MintScreen.tsx` only imports
+  `buildMintTransactionRequest` and never sees the encoding; it owns the idle → preparing →
+  pending → success/error state machine, backend error-message surfacing (`err.body.message`
+  when the API returns one, falling back to the HTTP status), and a retry affordance on failure.
+  This has not yet been exercised against a deployed contract — `PASSPORT_COLLECTION_ADDRESS` is
+  still unset (see root `CLAUDE.md`) — so the layout is correct-per-spec but untested on-chain.
 
 ## API client
 
@@ -159,8 +153,9 @@ user isn't tempted to bail into another tab mid-scan.
 
 - [ ] Confirm real backend routes/response shapes for `auth/ton-proof/*` and
       `passports/:category/mint/prepare`; update `src/api/client.ts` types accordingly.
-- [ ] Replace the mint cell stub (`src/features/mint/mintTx.ts`) once
-      `contracts/README.md` documents the `mint_or_refresh` message layout.
+- [ ] Exercise the mint cell-encoding (`src/features/mint/mintTx.ts`) against a deployed
+      `PassportCollection` once `PASSPORT_COLLECTION_ADDRESS` is set — layout matches
+      `contracts/DESIGN.md` §5.1 but has not been tested on-chain.
 - [ ] Point `public/tonconnect-manifest.json` and `.env.example` at the real deploy domain.
 - [ ] Wire the real score/domain-card data into Profile once the scoring engine exists
       (`SCORING.md`, not yet written per `ARCHITECTURE.md`).
