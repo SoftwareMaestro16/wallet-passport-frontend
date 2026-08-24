@@ -1,4 +1,8 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+// Falls back to the known-good testnet backend when VITE_API_BASE_URL isn't set at build time
+// (e.g. the Vercel dashboard env var hasn't been configured) — an empty fallback silently sends
+// every request to this app's own origin instead, which 404s on every route since this is a
+// static frontend with no API routes of its own.
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://walletpassport-185-163-47-190.sslip.io";
 
 export class ApiError extends Error {
   status: number;
@@ -113,6 +117,15 @@ export interface MintPrepareResponse {
   permit: MintPermit;
   signature: string; // base64-encoded 512-bit Ed25519 signature
   collectionAddress: string;
+  /**
+   * Base64 BOC of the exact `ItemContentEnvelope{displayName, tep64Content}` cell
+   * (contracts/src/common/structs.tolk) the backend hashed into `permit.metadataHash`. Must be
+   * attached UNMODIFIED as the 4th field of `MintOrRefresh` (contracts/src/common/messages.tolk)
+   * — see client/src/features/mint/mintTx.ts. Never re-encode this client-side: doing so
+   * produces a different cell (even if semantically identical), which changes `content.hash()`
+   * and makes the on-chain `content.hash() == permit.metadataHash` check fail.
+   */
+  content: string;
 }
 
 export const api = {
@@ -122,6 +135,6 @@ export const api = {
   verifyTonProof: (payload: TonProofVerifyRequest, initData: string) =>
     apiClient.post<TonProofVerifyResponse>("/auth/ton-proof/verify", payload, { initData }),
 
-  prepareMint: (category: "MAIN", initData: string) =>
+  prepareMint: (category: "passport", initData: string) =>
     apiClient.get<MintPrepareResponse>(`/passports/${category}/mint/prepare`, { initData }),
 };
