@@ -17,6 +17,8 @@ function rawWebApp(): any {
   return (window as any).Telegram?.WebApp;
 }
 
+const DESKTOP_PLATFORMS = new Set(["tdesktop", "macos"]);
+
 /**
  * Thin wrapper around @twa-dev/sdk's WebApp singleton — still used for method calls
  * (ready/expand/onEvent) which work correctly; only property reads are suspect (see `rawWebApp`).
@@ -26,6 +28,13 @@ export function bootstrapTelegram(): void {
   try {
     WebApp.ready();
     WebApp.expand();
+    const app = rawWebApp();
+    if (app?.isVersionAtLeast?.("8.0") && app?.requestFullscreen) {
+      app.requestFullscreen();
+      if (!DESKTOP_PLATFORMS.has(app.platform)) {
+        document.documentElement.setAttribute("data-tg-fullscreen-requested", "true");
+      }
+    }
     applyThemeVars();
     WebApp.onEvent("themeChanged", applyThemeVars);
   } catch {

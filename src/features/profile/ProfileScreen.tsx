@@ -6,6 +6,7 @@ import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
 import { ScoreBar } from "../../shared/ScoreBar";
 import { TestnetGuard } from "../../shared/TestnetGuard";
+import { buildReferralLink, getSavedReferralCode } from "../../shared/referral";
 import { useWalletProfile } from "./useWalletProfile";
 import { useWalletPassports } from "./useWalletPassports";
 import type {
@@ -16,13 +17,13 @@ import type {
 } from "../../api/client";
 
 const CATEGORY_LABEL_KEYS: Record<PassportCategoryName, string> = {
-  MAIN: "profile.categories.main",
-  PIONEER: "profile.categories.pioneer",
-  OPERATOR: "profile.categories.operator",
-  DEFI: "profile.categories.defi",
-  COLLECTOR: "profile.categories.collector",
-  STAKER: "profile.categories.staker",
-  BUILDER: "profile.categories.builder",
+  passport: "profile.categories.main",
+  pioneer: "profile.categories.pioneer",
+  operator: "profile.categories.operator",
+  defi: "profile.categories.defi",
+  collector: "profile.categories.collector",
+  staker: "profile.categories.staker",
+  builder: "profile.categories.builder",
 };
 
 function localeFor(lang: string): string {
@@ -196,10 +197,26 @@ function ProfileResult({
   const topFactors = [...score.factors].sort((a, b) => b.value - a.value).slice(0, 3);
   const firstTx = formatDate(stats.firstTxAt, lang);
   const passportsList = passports.state.status === "ready" ? passports.state.data.categories : null;
-  const mainCategory = passportsList?.find((c) => c.category === "MAIN");
+  const mainCategory = passportsList?.find((c) => c.category === "passport");
+  const referralCode = getSavedReferralCode();
+  const referralLink = buildReferralLink(referralCode);
 
   return (
     <>
+      <Section header={t("profile.reveal.title")} footer={t("profile.reveal.footer")}>
+        <Cell
+          multiline
+          after={
+            <Badge type="number" mode="primary">
+              {score.tier}
+            </Badge>
+          }
+          subtitle={t("profile.reveal.subtitle")}
+        >
+          {t("profile.reveal.ready")}
+        </Cell>
+      </Section>
+
       <Section header={t("profile.summary.title")}>
         <div className="sample-card-body">
           <ScoreBar score={score.tonScore} max={1000} label={`${t("profile.summary.title")} — ${score.tier}`} />
@@ -320,11 +337,15 @@ function ProfileResult({
               {t("profile.actions.go")}
             </Button>
           }
-          subtitle={mainCategory?.exists ? t("profile.sections.passports.minted", { revision: mainCategory.revision }) : undefined}
+          subtitle={mainCategory?.existsOnChain ? t("profile.sections.passports.minted", { revision: mainCategory.revision }) : undefined}
         >
           {t("profile.actions.mint")}
         </Cell>
-        <Cell subtitle={t("profile.actions.refreshHint")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
+        <Cell
+          multiline
+          subtitle={t("profile.actions.refreshHint")}
+          after={<Badge type="number">{t("profile.actions.refreshPrice")}</Badge>}
+        >
           {t("profile.actions.refresh")}
         </Cell>
         <Cell subtitle={t("profile.actions.viewRelicsHint")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
@@ -335,6 +356,25 @@ function ProfileResult({
         </Cell>
         <Cell subtitle={t("profile.actions.compareHint")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
           {t("profile.actions.compare")}
+        </Cell>
+      </Section>
+
+      <Section header={t("referral.title")} footer={t("referral.footer")}>
+        <Cell
+          multiline
+          subtitle={<span className="mono referral-link">{referralLink}</span>}
+          after={
+            <Button
+              size="s"
+              mode="outline"
+              disabled={!referralCode}
+              onClick={() => void navigator.clipboard?.writeText(referralLink)}
+            >
+              {t("referral.copy")}
+            </Button>
+          }
+        >
+          {referralCode ? t("referral.ready") : t("referral.connectToGet")}
         </Cell>
       </Section>
     </>
@@ -349,7 +389,7 @@ function PassportCategoryCell({
   t: ReturnType<typeof useTranslation>["t"];
 }) {
   const label = t(CATEGORY_LABEL_KEYS[category.category] ?? category.category);
-  const subtitle = category.exists
+  const subtitle = category.existsOnChain
     ? t("profile.sections.passports.minted", { revision: category.revision })
     : category.eligible
       ? t("profile.sections.passports.eligible")

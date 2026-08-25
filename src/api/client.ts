@@ -85,10 +85,12 @@ export interface TonProofVerifyRequest {
 }
 
 export interface TonProofVerifyResponse {
-  sessionToken: string;
-  profile: {
-    walletAddress: string;
-    scoreDisplay?: number;
+  binding: {
+    address: string;
+    network: string;
+    verifiedAt: string;
+    proofExpiresAt: string;
+    status: "ACTIVE" | "EXPIRED";
   };
 }
 
@@ -150,6 +152,11 @@ export interface ScanStartResponse {
   jobId: string;
   status: ScanJobStatus;
   walletAddress: string;
+  isOwnWallet: boolean;
+  incremental: {
+    previousScanUpperLt: string | null;
+    previousCompletedAt: string | null;
+  };
 }
 
 export interface ScanStatusResponse {
@@ -157,7 +164,13 @@ export interface ScanStatusResponse {
   walletAddress: string;
   status: ScanJobStatus;
   txFetched: number;
+  newTxFetched: number;
   txTotal: number | null;
+  incremental: {
+    previousScanUpperLt: string | null;
+    scanLowerLt: string | null;
+    scanUpperLt: string | null;
+  };
   startedAt: string | null;
   completedAt: string | null;
   error: string | null;
@@ -223,6 +236,10 @@ export interface WalletProfileResponse {
   scan: {
     jobId: string;
     scanUpperLt: string | null;
+    previousScanUpperLt: string | null;
+    scanLowerLt: string | null;
+    newTxFetched: number;
+    txTotal: number | null;
     completedAt: string | null;
   };
   score: WalletScoreResult;
@@ -234,20 +251,20 @@ export interface WalletProfileResponse {
  * until it ships — every caller must treat that as "hide the section", never a crash.
  */
 export type PassportCategoryName =
-  | "MAIN"
-  | "PIONEER"
-  | "OPERATOR"
-  | "DEFI"
-  | "COLLECTOR"
-  | "STAKER"
-  | "BUILDER";
+  | "passport"
+  | "pioneer"
+  | "operator"
+  | "defi"
+  | "collector"
+  | "staker"
+  | "builder";
 
 export interface WalletPassportCategoryStatus {
-  categoryId: string;
+  categoryId: number;
   category: PassportCategoryName;
   eligible: boolean;
-  exists: boolean;
-  revision: number;
+  existsOnChain: boolean;
+  revision: number | null;
   canMint: boolean;
   canRefresh: boolean;
 }

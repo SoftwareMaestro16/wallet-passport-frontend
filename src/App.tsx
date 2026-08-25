@@ -1,6 +1,6 @@
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { AppRoot, Tabbar } from "@telegram-apps/telegram-ui";
+import { AppRoot, Button, Tabbar } from "@telegram-apps/telegram-ui";
 import { TonConnectProvider } from "./ton/TonConnectProvider";
 import { LanguageSwitcher } from "./shared/LanguageSwitcher";
 import { WalletIcon, ProfileIcon, MintIcon } from "./shared/icons";
@@ -18,19 +18,36 @@ function Nav() {
   const navigate = useNavigate();
 
   const items = [
-    { to: "/", label: t("nav.connect"), icon: WalletIcon },
+    { to: "/", label: t("nav.scan"), icon: WalletIcon },
     { to: "/profile", label: t("nav.profile"), icon: ProfileIcon },
     { to: "/mint", label: t("nav.mint"), icon: MintIcon },
   ];
 
   return (
-    <Tabbar className="app-tabbar">
-      {items.map(({ to, label, icon: Icon }) => (
-        <Tabbar.Item key={to} text={label} selected={pathname === to} onClick={() => navigate(to)}>
-          <Icon />
-        </Tabbar.Item>
-      ))}
-    </Tabbar>
+    <>
+      <nav className="app-topnav" aria-label={t("nav.menu")}>
+        {items.map(({ to, label, icon: Icon }) => (
+          <Button
+            key={to}
+            size="s"
+            mode={pathname === to ? "filled" : "plain"}
+            onClick={() => navigate(to)}
+          >
+            <span className="app-topnav-item">
+              <Icon size={18} />
+              {label}
+            </span>
+          </Button>
+        ))}
+      </nav>
+      <Tabbar className="app-tabbar">
+        {items.map(({ to, label, icon: Icon }) => (
+          <Tabbar.Item key={to} text={label} selected={pathname === to} onClick={() => navigate(to)}>
+            <Icon />
+          </Tabbar.Item>
+        ))}
+      </Tabbar>
+    </>
   );
 }
 
@@ -43,19 +60,24 @@ function AppShell() {
   return (
     <div className="app-shell">
       <header className="app-header">
+        <div className="app-brand">
+          <span className="app-brand-mark">WP</span>
+          <span>Wallet Passport</span>
+        </div>
+        {showNav && <Nav />}
         <LanguageSwitcher />
       </header>
 
-      <main className="app-main">
-        <Routes>
-          <Route path="/" element={<ConnectScreen />} />
-          <Route path="/scanning" element={<ScanningScreen />} />
-          <Route path="/profile" element={<ProfileScreen />} />
-          <Route path="/mint" element={<MintScreen />} />
-        </Routes>
+      <main id="scroll-area" className="app-main">
+        <div className="content-col">
+          <Routes>
+            <Route path="/" element={<ConnectScreen />} />
+            <Route path="/scanning" element={<ScanningScreen />} />
+            <Route path="/profile" element={<ProfileScreen />} />
+            <Route path="/mint" element={<MintScreen />} />
+          </Routes>
+        </div>
       </main>
-
-      {showNav && <Nav />}
     </div>
   );
 }

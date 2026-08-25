@@ -6,8 +6,37 @@
     "sampleCardTitle": "Пример карточки",
     "sampleScoreLabel": "TON Score",
     "testnetBadge": "Тестовая сеть (testnet)",
+    "testnetTitle": "MVP работает только в тестовой сети",
+    "testnetHint": "Mainnet не используется до отдельного решения.",
     "scanButton": "Сканировать кошелёк",
-    "updateButton": "Обновить паспорт"
+    "updateButton": "Обновить паспорт",
+    "paidScan": {
+      "price": "100 Stars",
+      "prepared": "Paid scan подготовлен: в MVP кнопка запускает скан без реальной оплаты."
+    },
+    "menu": {
+      "title": "Главное меню",
+      "scan": {
+        "title": "Scan Wallet",
+        "price": "100 Stars",
+        "body": "Запускает сбор истории и расчёт Wallet Score. Оплата будет подключена позже."
+      },
+      "reveal": {
+        "title": "Profile / Reveal",
+        "badge": "После скана",
+        "body": "Показывает итоговый Score, сильные факторы и прозрачные метрики кошелька."
+      },
+      "mint": {
+        "title": "Mint SBT",
+        "badge": "Testnet",
+        "body": "Отправляет TonConnect-транзакцию с backend-signed permit без изменения payload."
+      },
+      "referral": {
+        "title": "Referral",
+        "badge": "t.me link",
+        "body": "Личная ссылка ведёт сразу в сценарий scan через startapp=ref_{code}."
+      }
+    }
   },
   "scanning": {
     "title": "Анализируем ваш кошелёк",
@@ -44,6 +73,12 @@
       "title": "Сканирование ещё не выполнено",
       "body": "Отсканируйте этот кошелёк, чтобы собрать его Wallet Passport профиль.",
       "cta": "Сканировать кошелёк"
+    },
+    "reveal": {
+      "title": "Reveal",
+      "ready": "Профиль кошелька готов",
+      "subtitle": "Результат построен по последнему завершённому сканированию.",
+      "footer": "Данные отображаются с backend/chain-слоя; frontend не вычисляет Score и не подписывает метаданные."
     },
     "summary": {
       "title": "Wallet Score",
@@ -138,7 +173,8 @@
       "go": "Открыть",
       "mint": "Выпустить паспорт",
       "refresh": "Обновить паспорт",
-      "refreshHint": "Скоро — обновление паспорта пока не подключено.",
+      "refreshHint": "Подготовленное состояние без оплаты и TonConnect-транзакции.",
+      "refreshPrice": "25 Stars",
       "viewRelics": "Редкие артефакты",
       "viewRelicsHint": "Появится позже.",
       "share": "Поделиться Score",
@@ -156,15 +192,33 @@
     "statusSuccess": "Транзакция отправлена! Паспорт появится после подтверждения в сети.",
     "statusError": "Не удалось подготовить транзакцию. Попробуйте ещё раз.",
     "notConnected": "Сначала подключите кошелёк",
-    "retry": "Повторить"
+    "retry": "Повторить",
+    "refresh": {
+      "title": "Refresh",
+      "footer": "Реальная оплата Stars и refresh-транзакция не подключены в MVP.",
+      "priceLabel": "Стоимость обновления",
+      "price": "25 Stars",
+      "prepareButton": "Подготовить refresh",
+      "preparedTitle": "Refresh подготовлен",
+      "preparedSubtitle": "UI-состояние готово; оплата и signed refresh permit будут подключены после backend/contract интерфейса."
+    }
   },
   "testnetGuard": {
     "warning": "Кошелёк подключён к mainnet. Переключите кошелёк в тестовую сеть (testnet), чтобы пользоваться Wallet Passport (testnet MVP)."
   },
   "nav": {
+    "menu": "Главное меню",
     "connect": "Кошелёк",
+    "scan": "Scan",
     "profile": "Профиль",
     "mint": "Mint"
+  },
+  "referral": {
+    "title": "Referral",
+    "ready": "Ваша referral-ссылка",
+    "connectToGet": "Подключите кошелёк, чтобы получить referral code",
+    "copy": "Копировать",
+    "footer": "Формат ссылки: t.me/WalletPassportXBot/scan?startapp=ref_{code}."
   },
   "common": {
     "loading": "Загрузка...",

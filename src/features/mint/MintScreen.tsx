@@ -33,6 +33,7 @@ export function MintScreen() {
   const { t } = useTranslation();
   const { isConnected, tonConnectUI } = useTonConnectAccount();
   const [state, setState] = useState<MintState>({ status: "idle" });
+  const [refreshPrepared, setRefreshPrepared] = useState(false);
 
   async function handleMint() {
     setState({ status: "preparing" });
@@ -94,6 +95,28 @@ export function MintScreen() {
           {state.status === "success" && t("mint.statusSuccess")}
           {state.status === "error" && t("common.error")}
         </Cell>
+      </Section>
+
+      <Section header={t("mint.refresh.title")} footer={t("mint.refresh.footer")}>
+        <div className="status-stack">
+          <div className="price-row">
+            <span>{t("mint.refresh.priceLabel")}</span>
+            <strong>{t("mint.refresh.price")}</strong>
+          </div>
+          <Button
+            mode="outline"
+            stretched
+            disabled={!isConnected}
+            onClick={() => setRefreshPrepared(true)}
+          >
+            {t("mint.refresh.prepareButton")}
+          </Button>
+        </div>
+        {refreshPrepared && (
+          <Cell multiline subtitle={t("mint.refresh.preparedSubtitle")}>
+            {t("mint.refresh.preparedTitle")}
+          </Cell>
+        )}
       </Section>
     </div>
   );

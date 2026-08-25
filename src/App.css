@@ -6,7 +6,8 @@
  */
 
 .app-root {
-  min-height: 100svh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /*
@@ -24,18 +25,18 @@
  * value AppRoot's internal state landed on.
  */
 .app-root[data-scheme="dark"] {
-  --tgui--bg_color: var(--tg-theme-bg-color, #212121);
+  --tgui--bg_color: var(--tg-theme-bg-color, #0f0f10);
   --tgui--text_color: var(--tg-theme-text-color, #fff);
   --tgui--hint_color: var(--tg-theme-hint-color, #aaa);
-  --tgui--secondary_bg_color: var(--tg-theme-secondary-bg-color, #0f0f0f);
-  --tgui--header_bg_color: var(--tg-theme-header-bg-color, #212121);
-  --tgui--section_bg_color: var(--tg-theme-section-bg-color, #212121);
+  --tgui--secondary_bg_color: var(--tg-theme-secondary-bg-color, #171719);
+  --tgui--header_bg_color: var(--tg-theme-header-bg-color, #0f0f10);
+  --tgui--section_bg_color: var(--tg-theme-section-bg-color, #171719);
   --tgui--section_header_text_color: var(--tg-theme-section-header-text-color, #aaa);
   --tgui--subtitle_text_color: var(--tg-theme-subtitle-text-color, #aaa);
-  --tgui--tertiary_bg_color: #2a2a2a;
-  --tgui--quartenary_bg_color: #2f2f2f;
-  --tgui--segmented_control_active_bg: #2f2f2f;
-  --tgui--card_bg_color: #242424;
+  --tgui--tertiary_bg_color: #232327;
+  --tgui--quartenary_bg_color: #29292d;
+  --tgui--segmented_control_active_bg: #29292d;
+  --tgui--card_bg_color: #171719;
   --tgui--secondary_hint_color: #78797e;
   --tgui--divider: hsla(0, 0%, 100%, 0.05);
   --tgui--outline: hsla(0, 0%, 100%, 0.1);
@@ -44,9 +45,8 @@
 .app-shell {
   display: flex;
   flex-direction: column;
-  min-height: 100svh;
-  max-width: 480px;
-  margin: 0 auto;
+  height: 100dvh;
+  overflow: hidden;
   /* --tgui--bg_color already resolves through --tg-theme-bg-color to the kit's own light/dark
      default (see AppRoot's appearance class) — reference it directly so this shell never drifts
      out of sync with the Cells/Sections rendered inside it when running outside real Telegram. */
@@ -55,15 +55,72 @@
 
 .app-header {
   display: flex;
-  justify-content: flex-end;
-  padding: 10px 16px 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 8px;
+  background: color-mix(in srgb, var(--tgui--bg_color, #0f0f10) 92%, transparent);
+  border-bottom: 1px solid var(--tgui--divider);
+  z-index: 2;
+}
+
+:root[data-tg-fullscreen-requested="true"] .app-header {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 54px);
+}
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  color: var(--tgui--text_color);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.app-brand-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--tg-theme-button-color, #2ea6ff);
+  color: var(--tg-theme-button-text-color, #fff);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.app-topnav {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.app-topnav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .app-main {
   flex: 1;
-  padding: 8px 0 16px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 0 16px;
   /* Tabbar is fixed/full-viewport (telegram-ui FixedLayout) — keep content clear of it. */
   padding-bottom: calc(84px + var(--tgui--safe_area_inset_bottom, 0px));
+}
+
+.content-col {
+  width: 100%;
+  min-height: 100%;
+  margin-inline: auto;
 }
 
 /* Tabbar.className: telegram-ui's FixedLayout spans the whole viewport (left:0;right:0), which
@@ -74,8 +131,9 @@
   left: 50%;
   right: auto;
   width: 100%;
-  max-width: 480px;
+  max-width: 599px;
   transform: translateX(-50%);
+  border-top: 1px solid var(--tgui--divider);
 }
 
 .screen {
@@ -97,11 +155,84 @@
 }
 
 .connect-generate {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   padding: 0 16px;
 }
 
 .sample-card-body {
   padding: 12px 16px 4px;
+}
+
+.hero-panel {
+  padding: 18px 16px 16px;
+}
+
+.hero-title {
+  margin: 0 0 8px;
+  color: var(--tgui--text_color);
+  font-size: 30px;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.hero-copy,
+.muted-copy {
+  color: var(--tgui--subtitle_text_color);
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 12px 16px 16px;
+}
+
+.menu-card {
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid var(--tgui--outline);
+  border-radius: 8px;
+  background: var(--tgui--secondary_bg_color);
+  color: var(--tgui--text_color);
+}
+
+.menu-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.menu-card p {
+  margin: 0;
+  color: var(--tgui--subtitle_text_color);
+  font-size: 14px;
+}
+
+.price-row,
+.referral-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.referral-link {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 14px;
 }
 
 .score-bar-wrap {
@@ -152,5 +283,58 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 600px) {
+  .app-shell {
+    padding: 14px 14px 0;
+  }
+
+  .app-header {
+    width: min(100%, 760px);
+    margin: 0 auto 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--tgui--divider);
+    border-radius: 8px;
+    background: var(--tgui--secondary_bg_color);
+  }
+
+  :root[data-tg-fullscreen-requested="true"] .app-header {
+    padding-top: 10px;
+  }
+
+  .app-topnav {
+    display: flex;
+  }
+
+  .app-tabbar {
+    display: none;
+  }
+
+  .app-main {
+    padding-bottom: 24px;
+  }
+
+  .content-col {
+    max-width: 640px;
+  }
+
+  .menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .content-col,
+  .app-header {
+    max-width: 760px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .content-col,
+  .app-header {
+    max-width: 880px;
   }
 }

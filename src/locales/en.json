@@ -6,8 +6,37 @@
     "sampleCardTitle": "Sample card",
     "sampleScoreLabel": "TON Score",
     "testnetBadge": "Testnet",
+    "testnetTitle": "MVP runs on testnet only",
+    "testnetHint": "Mainnet is not used until explicitly enabled.",
     "scanButton": "Scan Wallet",
-    "updateButton": "Update Passport"
+    "updateButton": "Update Passport",
+    "paidScan": {
+      "price": "100 Stars",
+      "prepared": "Paid scan is prepared: in the MVP this starts a scan without real payment."
+    },
+    "menu": {
+      "title": "Main menu",
+      "scan": {
+        "title": "Scan Wallet",
+        "price": "100 Stars",
+        "body": "Starts history collection and Wallet Score calculation. Payment will be wired later."
+      },
+      "reveal": {
+        "title": "Profile / Reveal",
+        "badge": "After scan",
+        "body": "Shows the final Score, strongest factors, and transparent wallet metrics."
+      },
+      "mint": {
+        "title": "Mint SBT",
+        "badge": "Testnet",
+        "body": "Sends a TonConnect transaction with the backend-signed permit unchanged."
+      },
+      "referral": {
+        "title": "Referral",
+        "badge": "t.me link",
+        "body": "Your personal link opens the scan flow through startapp=ref_{code}."
+      }
+    }
   },
   "scanning": {
     "title": "Analyzing your wallet",
@@ -44,6 +73,12 @@
       "title": "No scan yet",
       "body": "Scan this wallet to build its Wallet Passport profile.",
       "cta": "Scan Wallet"
+    },
+    "reveal": {
+      "title": "Reveal",
+      "ready": "Wallet profile is ready",
+      "subtitle": "Result is based on the last completed scan.",
+      "footer": "Data is displayed from backend/chain state; the frontend does not compute Score or sign metadata."
     },
     "summary": {
       "title": "Wallet Score",
@@ -136,7 +171,8 @@
       "go": "Open",
       "mint": "Mint Passport",
       "refresh": "Refresh Passport",
-      "refreshHint": "Coming soon — refresh isn't wired up yet.",
+      "refreshHint": "Prepared UI state without Stars payment or TonConnect transaction.",
+      "refreshPrice": "25 Stars",
       "viewRelics": "View Rare Relics",
       "viewRelicsHint": "Coming soon.",
       "share": "Share Score",
@@ -154,15 +190,33 @@
     "statusSuccess": "Transaction sent! Your passport will appear once confirmed on-chain.",
     "statusError": "Could not prepare the transaction. Please try again.",
     "notConnected": "Connect your wallet first",
-    "retry": "Retry"
+    "retry": "Retry",
+    "refresh": {
+      "title": "Refresh",
+      "footer": "Real Stars payment and the refresh transaction are not wired in the MVP.",
+      "priceLabel": "Refresh price",
+      "price": "25 Stars",
+      "prepareButton": "Prepare refresh",
+      "preparedTitle": "Refresh prepared",
+      "preparedSubtitle": "The UI state is ready; payment and the signed refresh permit will be wired after the backend/contract interface."
+    }
   },
   "testnetGuard": {
     "warning": "Wallet is connected to mainnet. Switch your wallet to testnet to use Wallet Passport (testnet MVP)."
   },
   "nav": {
+    "menu": "Main menu",
     "connect": "Wallet",
+    "scan": "Scan",
     "profile": "Profile",
     "mint": "Mint"
+  },
+  "referral": {
+    "title": "Referral",
+    "ready": "Your referral link",
+    "connectToGet": "Connect your wallet to receive a referral code",
+    "copy": "Copy",
+    "footer": "Link format: t.me/WalletPassportXBot/scan?startapp=ref_{code}."
   },
   "common": {
     "loading": "Loading...",

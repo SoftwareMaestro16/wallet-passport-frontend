@@ -3,6 +3,7 @@ import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import type { TonProofItemReplySuccess } from "@tonconnect/ui-react";
 import { api, type TonProofVerifyResponse } from "../api/client";
 import { getTelegramInitData, waitForTelegramInitData } from "../app/telegram";
+import { saveReferralCode } from "../shared/referral";
 
 /**
  * `useTonProof`/`useVerifiedProfile` are called independently from both `ConnectScreen` and
@@ -48,7 +49,8 @@ export function useTonProof() {
       // on at least one real client `initData` reads empty for a beat right at mount (see its
       // doc comment) — this ran at mount before, so it hit that empty window every time.
       const initData = await waitForTelegramInitData();
-      await api.telegramAuth(initData);
+      const auth = await api.telegramAuth(initData);
+      saveReferralCode(auth.user.referralCode);
       const { payload } = await api.getTonProofPayload(initData);
       payloadRef.current = payload;
       tonConnectUI.setConnectRequestParameters({ state: "ready", value: { tonProof: payload } });
