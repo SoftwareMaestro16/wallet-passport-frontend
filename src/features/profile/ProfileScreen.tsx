@@ -118,7 +118,7 @@ function applyProfileTheme(theme: ProfileTheme): void {
 export function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const { address } = useTonConnectAccount();
-  const { isConnected, state, retry } = useVerifiedProfile();
+  const { isConnected, state, retry, reconnect } = useVerifiedProfile();
   const lang = i18n.language;
   const currentLanguage = lang === "ru" ? "ru" : "en";
   const [theme, setTheme] = useState<ProfileTheme>(getInitialProfileTheme);
@@ -252,6 +252,20 @@ export function ProfileScreen() {
             }
           >
             {t("common.error")}
+          </Cell>
+        </Section>
+      )}
+
+      {state.status === "no-proof" && (
+        <Section footer={t("profile.noProofHint")}>
+          <Cell
+            after={
+              <Button size="s" mode="outline" onClick={reconnect}>
+                {t("profile.reconnect")}
+              </Button>
+            }
+          >
+            {t("profile.noProof")}
           </Cell>
         </Section>
       )}

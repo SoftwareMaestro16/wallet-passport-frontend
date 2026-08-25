@@ -9,7 +9,7 @@ import { useWalletProfile } from "../profile/useWalletProfile";
 export function ConnectScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isConnected, state, retry } = useVerifiedProfile();
+  const { isConnected, state, retry, reconnect } = useVerifiedProfile();
   const { address } = useTonConnectAccount();
   // Only matters once ton_proof has verified this wallet — a completed scan for THIS address
   // (200) flips the button to "Update Passport"; no scan yet (409) or unknown keeps "Scan Wallet".
@@ -42,6 +42,20 @@ export function ConnectScreen() {
       {isConnected && state.status === "verifying" && (
         <Section>
           <Cell before={<Spinner size="s" />}>{t("profile.verifying")}</Cell>
+        </Section>
+      )}
+
+      {isConnected && state.status === "no-proof" && (
+        <Section footer={t("profile.noProofHint")}>
+          <Cell
+            after={
+              <Button size="s" mode="outline" onClick={reconnect}>
+                {t("profile.reconnect")}
+              </Button>
+            }
+          >
+            {t("profile.noProof")}
+          </Cell>
         </Section>
       )}
 

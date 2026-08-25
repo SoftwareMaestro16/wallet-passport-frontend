@@ -12,7 +12,13 @@ export type VerifiedProfileState =
   // server down) — distinct from "error" (a completed-but-rejected verification), since here
   // the wallet connected with no proof attached at all and retry must re-fetch the payload
   // before the *next* connect, not just re-run verify() against the same (proof-less) wallet.
-  | { status: "backend-unreachable" };
+  | { status: "backend-unreachable" }
+  // The wallet connected before `refreshPayload()`'s async chain (telegramAuth + payload fetch)
+  // finished attaching `tonProof` to `setConnectRequestParameters` — TonConnect only attaches
+  // `connectItems.tonProof` at connect time, never retroactively, so this connection can never
+  // produce a proof; the only fix is disconnecting and reconnecting once a fresh payload is
+  // ready. Previously this silently left `state` stuck at "idle" forever with no feedback.
+  | { status: "no-proof" };
 
 /**
  * Shared `ton_proof` verification gate — Connect uses it to decide when the "Generate" action
@@ -20,7 +26,7 @@ export type VerifiedProfileState =
  * logic) so both screens share one verify-on-connect flow instead of diverging over time.
  */
 export function useVerifiedProfile() {
-  const { isConnected } = useTonConnectAccount();
+  const { isConnected, tonConnectUI } = useTonConnectAccount();
   const { verify, hasProof, payloadError, refreshPayload } = useTonProof();
   const [state, setState] = useState<VerifiedProfileState>({ status: "idle" });
 
@@ -31,7 +37,10 @@ export function useVerifiedProfile() {
       setState({ status: "backend-unreachable" });
       return;
     }
-    if (!hasProof) return;
+    if (!hasProof) {
+      setState({ status: "no-proof" });
+      return;
+    }
 
     setState({ status: "verifying" });
     verify()
@@ -47,6 +56,12 @@ export function useVerifiedProfile() {
     retry: () => {
       void refreshPayload();
       setState({ status: "idle" });
+    },
+    reconnect: async () => {
+      await tonConnectUI.disconnect();
+      await refreshPayload();
+      setState({ status: "idle" });
+      void tonConnectUI.openModal();
     },
   };
 }
