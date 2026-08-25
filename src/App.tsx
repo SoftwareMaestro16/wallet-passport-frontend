@@ -83,7 +83,10 @@ function TonConnectThemeSync({ theme }: { theme: AppTheme }) {
     // theme change after the initial `TonConnectUIProvider` mount.
     setOptions({
       uiPreferences: { theme: theme === "dark" ? THEME.DARK : THEME.LIGHT },
-      actionsConfiguration: { twaReturnUrl: "https://t.me" },
+      actionsConfiguration: {
+        twaReturnUrl: "https://t.me/WalletPassportXBot/scan",
+        returnStrategy: "back",
+      },
     });
   }, [theme, setOptions]);
   return null;
