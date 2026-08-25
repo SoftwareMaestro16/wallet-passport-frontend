@@ -66,6 +66,10 @@
     "retry": "Повторить",
     "scoreLabel": "TON Score",
     "walletLabel": "Кошелёк",
+    "telegramLanguage": {
+      "ru": "Русский интерфейс Telegram",
+      "en": "English Telegram UI"
+    },
     "disconnect": "Отключить",
     "loadingProfile": "Загружаем профиль кошелька...",
     "profileError": "Не удалось загрузить профиль кошелька.",
@@ -213,11 +217,21 @@
     "profile": "Профиль",
     "mint": "Mint"
   },
+  "mainButton": {
+    "scan": "Scan Wallet",
+    "scanning": "Scanning..."
+  },
   "referral": {
     "title": "Referral",
     "ready": "Ваша referral-ссылка",
     "connectToGet": "Подключите кошелёк, чтобы получить referral code",
     "copy": "Копировать",
+    "shareInline": "Поделиться",
+    "stats": {
+      "invited": "приглашены",
+      "walletConnected": "подключили кошелёк",
+      "scanned": "сделали скан"
+    },
     "footer": "Формат ссылки: t.me/WalletPassportXBot/scan?startapp=ref_{code}."
   },
   "common": {

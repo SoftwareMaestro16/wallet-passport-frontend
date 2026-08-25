@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppRoot, Button, Tabbar } from "@telegram-apps/telegram-ui";
@@ -8,7 +9,9 @@ import { ConnectScreen } from "./features/connect/ConnectScreen";
 import { ScanningScreen } from "./features/scanning/ScanningScreen";
 import { ProfileScreen } from "./features/profile/ProfileScreen";
 import { MintScreen } from "./features/mint/MintScreen";
-import { useTelegramAppearance } from "./app/telegram";
+import { useTelegramAppearance, useTelegramMainButton } from "./app/telegram";
+import { useTonConnectAccount } from "./ton/useTonConnectAccount";
+import { useVerifiedProfile } from "./ton/useVerifiedProfile";
 import "@telegram-apps/telegram-ui/dist/styles.css";
 import "./App.css";
 
@@ -52,10 +55,29 @@ function Nav() {
 }
 
 function AppShell() {
+  const { t } = useTranslation();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { isConnected } = useTonConnectAccount();
+  const { state } = useVerifiedProfile();
   // Scanning is a focused, transient step (per TON_Relics spec §23) — hiding the tab bar there
   // keeps the user from bailing into Mint/Profile mid-scan instead of watching it finish.
   const showNav = pathname !== "/scanning";
+  const scanInProgress = pathname === "/scanning";
+  const canScan = isConnected && state.status === "success";
+
+  const handleMainButtonClick = useCallback(() => {
+    if (!canScan || scanInProgress) return;
+    navigate("/scanning");
+  }, [canScan, navigate, scanInProgress]);
+
+  useTelegramMainButton({
+    text: scanInProgress ? t("mainButton.scanning") : t("mainButton.scan"),
+    visible: canScan || scanInProgress,
+    loading: scanInProgress,
+    disabled: !canScan || scanInProgress,
+    onClick: handleMainButtonClick,
+  });
 
   return (
     <div className="app-shell">

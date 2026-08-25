@@ -66,6 +66,10 @@
     "retry": "Retry",
     "scoreLabel": "TON Score",
     "walletLabel": "Wallet",
+    "telegramLanguage": {
+      "ru": "Russian Telegram UI",
+      "en": "English Telegram UI"
+    },
     "disconnect": "Disconnect",
     "loadingProfile": "Loading your wallet profile...",
     "profileError": "Could not load your wallet profile.",
@@ -211,11 +215,21 @@
     "profile": "Profile",
     "mint": "Mint"
   },
+  "mainButton": {
+    "scan": "Scan Wallet",
+    "scanning": "Scanning..."
+  },
   "referral": {
     "title": "Referral",
     "ready": "Your referral link",
     "connectToGet": "Connect your wallet to receive a referral code",
     "copy": "Copy",
+    "shareInline": "Share",
+    "stats": {
+      "invited": "invited",
+      "walletConnected": "connected wallet",
+      "scanned": "completed scan"
+    },
     "footer": "Link format: t.me/WalletPassportXBot/scan?startapp=ref_{code}."
   },
   "common": {

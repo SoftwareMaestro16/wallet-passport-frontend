@@ -8,11 +8,12 @@ const STORAGE_KEY = "wallet-passport-lang";
 
 /** Russian is the default/primary language; anything that isn't "ru" falls back to English. */
 function resolveInitialLanguage(): "ru" | "en" {
+  const tgLang = getTelegramLanguageCode();
+  if (tgLang) return tgLang === "ru" ? "ru" : "en";
+
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "ru" || stored === "en") return stored;
-
-  const tgLang = getTelegramLanguageCode();
-  return tgLang === "ru" ? "ru" : tgLang ? "en" : "ru";
+  return "ru";
 }
 
 void i18n.use(initReactI18next).init({

@@ -63,7 +63,16 @@ export const apiClient = {
 // ton_proof flow from TMAGUIDE.md §3. Adjust once server/src/http routes are finalized.
 
 export interface TelegramAuthResponse {
-  user: { id: string; username: string | null; referralCode: string };
+  user: {
+    id: string;
+    username: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    photoUrl: string | null;
+    isPremium: boolean;
+    languageCode: string | null;
+    referralCode: string;
+  };
   expiresAt: string;
 }
 
@@ -274,6 +283,29 @@ export interface WalletPassportsResponse {
   categories: WalletPassportCategoryStatus[];
 }
 
+export interface ReferralMeResponse {
+  user: {
+    id: string;
+    telegramId: string;
+    username: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    photoUrl: string | null;
+    isPremium: boolean;
+    languageCode: string | null;
+    referralCode: string;
+  };
+  referral: {
+    code: string;
+    link: string;
+  };
+  stats: {
+    invited: number;
+    walletConnected: number;
+    scanned: number;
+  };
+}
+
 export const api = {
   // Must succeed before verifyTonProof: that route requires an existing session cookie, which
   // only this call issues (see server/src/http/routes/auth.ts). initData is sent as a header on
@@ -302,4 +334,6 @@ export const api = {
 
   getWalletPassports: (address: string) =>
     apiClient.get<WalletPassportsResponse>(`/wallets/${encodeURIComponent(address)}/passports`),
+
+  getMyReferral: () => apiClient.get<ReferralMeResponse>("/referrals/me"),
 };

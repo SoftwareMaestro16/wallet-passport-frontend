@@ -228,6 +228,46 @@
   white-space: nowrap;
 }
 
+.referral-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.referral-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px 16px 14px;
+}
+
+.referral-stats-grid div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--tgui--outline);
+  border-radius: 8px;
+  background: var(--tgui--secondary_bg_color);
+}
+
+.referral-stats-grid strong,
+.referral-stats-grid span {
+  display: block;
+}
+
+.referral-stats-grid strong {
+  color: var(--tgui--text_color);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.referral-stats-grid span {
+  margin-top: 5px;
+  color: var(--tgui--subtitle_text_color);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
 .status-stack {
   display: flex;
   flex-direction: column;

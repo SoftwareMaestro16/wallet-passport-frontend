@@ -84,6 +84,59 @@ export function getTelegramLanguageCode(): string | undefined {
   }
 }
 
+export function useTelegramMainButton(options: {
+  text: string;
+  visible: boolean;
+  loading?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}): void {
+  const { text, visible, loading, disabled, onClick } = options;
+  useEffect(() => {
+    const app = rawWebApp();
+    const button = app?.MainButton;
+    if (!button) return undefined;
+
+    const handleClick = () => onClick();
+
+    try {
+      button.setText(text);
+      if (disabled) button.disable();
+      else button.enable();
+      if (loading) button.showProgress(false);
+      else button.hideProgress();
+      if (visible) button.show();
+      else button.hide();
+      button.onClick(handleClick);
+    } catch {
+      return undefined;
+    }
+
+    return () => {
+      try {
+        button.offClick(handleClick);
+        button.hideProgress();
+        button.hide();
+      } catch {
+        // no-op outside Telegram or on clients with a partial MainButton implementation
+      }
+    };
+  }, [text, visible, loading, disabled, onClick]);
+}
+
+export function shareReferralViaInlineMode(referralCode: string): boolean {
+  const app = rawWebApp();
+  try {
+    if (app?.switchInlineQuery) {
+      app.switchInlineQuery(`ref_${referralCode}`, ["users", "groups", "channels"]);
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 /**
  * Raw initData string — sent to the backend for Telegram auth validation. Never parsed/trusted
  * client-side.

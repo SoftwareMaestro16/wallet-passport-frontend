@@ -6,9 +6,11 @@ import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
 import { ScoreBar } from "../../shared/ScoreBar";
 import { TestnetGuard } from "../../shared/TestnetGuard";
+import { shareReferralViaInlineMode } from "../../app/telegram";
 import { buildReferralLink, getSavedReferralCode } from "../../shared/referral";
 import { useWalletProfile } from "./useWalletProfile";
 import { useWalletPassports } from "./useWalletPassports";
+import { useReferralMe } from "./useReferralMe";
 import type {
   PassportCategoryName,
   ScoreFactorCode,
@@ -72,6 +74,7 @@ export function ProfileScreen() {
 
   const walletProfile = useWalletProfile(state.status === "success" ? address : undefined);
   const walletPassports = useWalletPassports(state.status === "success" ? address : undefined);
+  const referralMe = useReferralMe(state.status === "success");
 
   const navigate = useNavigate();
 
@@ -88,6 +91,21 @@ export function ProfileScreen() {
   return (
     <div className="screen profile-screen">
       <Section header={t("profile.title")}>
+        {referralMe.state.status === "ready" && (
+          <Cell
+            before={
+              <Avatar
+                size={40}
+                src={referralMe.state.data.user.photoUrl ?? undefined}
+                acronym={userAcronym(referralMe.state.data.user.firstName, referralMe.state.data.user.username)}
+              />
+            }
+            subtitle={userSubtitle(referralMe.state.data.user.username, referralMe.state.data.user.languageCode, t)}
+            after={referralMe.state.data.user.isPremium ? <Badge type="number">Premium</Badge> : undefined}
+          >
+            {displayUserName(referralMe.state.data.user.firstName, referralMe.state.data.user.lastName, referralMe.state.data.user.username)}
+          </Cell>
+        )}
         <Cell before={<Avatar size={40} acronym={acronymFor(address)} />} subtitle={t("profile.walletLabel")}>
           <span className="mono">{shortAddress(address)}</span>
         </Cell>
@@ -170,6 +188,7 @@ export function ProfileScreen() {
           lang={lang}
           t={t}
           navigate={navigate}
+          referralMe={referralMe}
         />
       )}
 
@@ -186,20 +205,25 @@ function ProfileResult({
   lang,
   t,
   navigate,
+  referralMe,
 }: {
   data: WalletProfileResponse;
   passports: ReturnType<typeof useWalletPassports>;
   lang: string;
   t: ReturnType<typeof useTranslation>["t"];
   navigate: (path: string) => void;
+  referralMe: ReturnType<typeof useReferralMe>;
 }) {
   const { score, stats } = data;
   const topFactors = [...score.factors].sort((a, b) => b.value - a.value).slice(0, 3);
   const firstTx = formatDate(stats.firstTxAt, lang);
   const passportsList = passports.state.status === "ready" ? passports.state.data.categories : null;
   const mainCategory = passportsList?.find((c) => c.category === "passport");
-  const referralCode = getSavedReferralCode();
-  const referralLink = buildReferralLink(referralCode);
+  const referralCode =
+    referralMe.state.status === "ready" ? referralMe.state.data.referral.code : getSavedReferralCode();
+  const referralLink =
+    referralMe.state.status === "ready" ? referralMe.state.data.referral.link : buildReferralLink(referralCode);
+  const referralStats = referralMe.state.status === "ready" ? referralMe.state.data.stats : null;
 
   return (
     <>
@@ -364,18 +388,46 @@ function ProfileResult({
           multiline
           subtitle={<span className="mono referral-link">{referralLink}</span>}
           after={
-            <Button
-              size="s"
-              mode="outline"
-              disabled={!referralCode}
-              onClick={() => void navigator.clipboard?.writeText(referralLink)}
-            >
-              {t("referral.copy")}
-            </Button>
+            <div className="referral-actions">
+              <Button
+                size="s"
+                mode="outline"
+                disabled={!referralCode}
+                onClick={() => void navigator.clipboard?.writeText(referralLink)}
+              >
+                {t("referral.copy")}
+              </Button>
+              <Button
+                size="s"
+                disabled={!referralCode}
+                onClick={() => {
+                  if (!referralCode || shareReferralViaInlineMode(referralCode)) return;
+                  window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}`, "_blank", "noopener,noreferrer");
+                }}
+              >
+                {t("referral.shareInline")}
+              </Button>
+            </div>
           }
         >
           {referralCode ? t("referral.ready") : t("referral.connectToGet")}
         </Cell>
+        {referralStats && (
+          <div className="referral-stats-grid">
+            <div>
+              <strong>{formatNumber(referralStats.invited, lang)}</strong>
+              <span>{t("referral.stats.invited")}</span>
+            </div>
+            <div>
+              <strong>{formatNumber(referralStats.walletConnected, lang)}</strong>
+              <span>{t("referral.stats.walletConnected")}</span>
+            </div>
+            <div>
+              <strong>{formatNumber(referralStats.scanned, lang)}</strong>
+              <span>{t("referral.stats.scanned")}</span>
+            </div>
+          </div>
+        )}
       </Section>
     </>
   );
@@ -414,4 +466,22 @@ function shortAddress(address: string): string {
 
 function acronymFor(address: string): string {
   return address ? address.slice(2, 4).toUpperCase() : "??";
+}
+
+function displayUserName(firstName: string | null, lastName: string | null, username: string | null): string {
+  const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+  return fullName || (username ? `@${username}` : "Telegram user");
+}
+
+function userAcronym(firstName: string | null, username: string | null): string {
+  return (firstName || username || "WP").slice(0, 2).toUpperCase();
+}
+
+function userSubtitle(
+  username: string | null,
+  languageCode: string | null,
+  t: ReturnType<typeof useTranslation>["t"],
+): string {
+  const lang = languageCode === "ru" ? t("profile.telegramLanguage.ru") : t("profile.telegramLanguage.en");
+  return username ? `@${username} · ${lang}` : lang;
 }
