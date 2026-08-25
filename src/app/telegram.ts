@@ -261,7 +261,15 @@ export function hapticNotification(type: HapticNotificationType): void {
  */
 export function getTelegramInitData(): string {
   try {
-    return rawWebApp()?.initData ?? "";
+    const fromSdk = rawWebApp()?.initData;
+    if (fromSdk) return fromSdk;
+    const sources = [window.location.hash.replace(/^#/, ""), window.location.search.replace(/^\?/, "")];
+    for (const source of sources) {
+      const params = new URLSearchParams(source);
+      const data = params.get("tgWebAppData");
+      if (data) return data;
+    }
+    return "";
   } catch {
     return "";
   }

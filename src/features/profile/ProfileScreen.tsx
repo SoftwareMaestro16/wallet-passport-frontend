@@ -186,7 +186,6 @@ export function ProfileScreen() {
             {displayUserName(telegramUser.firstName ?? null, telegramUser.lastName ?? null, telegramUser.username ?? null)}
           </Cell>
         ) : null}
-        {isConnected && <Cell before={<Avatar size={40} acronym={acronymFor(address)} />} subtitle={t("profile.walletLabel")}><span className="mono">{shortAddress(address)}</span></Cell>}
       </Section>
 
       <Section header={t("profile.settings.title")}>

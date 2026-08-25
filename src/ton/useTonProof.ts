@@ -49,6 +49,7 @@ export function useTonProof() {
       // on at least one real client `initData` reads empty for a beat right at mount (see its
       // doc comment) — this ran at mount before, so it hit that empty window every time.
       const initData = await waitForTelegramInitData();
+      if (!initData) throw new Error("Telegram initData unavailable");
       const auth = await api.telegramAuth(initData);
       saveReferralCode(auth.user.referralCode);
       const { payload } = await api.getTonProofPayload(initData);

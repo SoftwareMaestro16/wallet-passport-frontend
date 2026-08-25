@@ -131,228 +131,6 @@
   white-space: nowrap;
 }
 
-.app-tonconnect-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 1 auto;
-  gap: 8px;
-  min-width: 44px;
-  max-width: min(62vw, 232px);
-  min-height: 44px;
-  padding: 7px 12px 7px 8px;
-  border: 1px solid color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 38%, transparent);
-  border-radius: 8px;
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 24%, var(--tgui--secondary_bg_color, #fff)),
-      color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 13%, var(--tgui--secondary_bg_color, #fff))
-    );
-  color: var(--tgui--text_color);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--tg-theme-button-text-color, #fff) 20%, transparent) inset;
-  cursor: pointer;
-  font: inherit;
-  transition:
-    transform 120ms ease,
-    border-color 120ms ease,
-    background 120ms ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.app-tonconnect-button:active {
-  transform: scale(0.98);
-}
-
-.app-tonconnect-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 62%, transparent);
-  outline-offset: 2px;
-}
-
-.app-tonconnect-icon {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  background: var(--tg-theme-button-color, #2ea6ff);
-  color: var(--tg-theme-button-text-color, #fff);
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.app-tonconnect-icon svg {
-  width: 19px;
-  height: 19px;
-}
-
-.app-tonconnect-label {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--tgui--text_color);
-  font-size: 14px;
-  font-weight: 650;
-  line-height: 18px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.wallet-sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 35;
-  background: color-mix(in srgb, #000 28%, transparent);
-  animation: wallet-sheet-fade 150ms ease-out;
-}
-
-.wallet-sheet {
-  position: fixed;
-  left: 10px;
-  right: 10px;
-  bottom: max(10px, env(safe-area-inset-bottom, 0px));
-  z-index: 40;
-  display: grid;
-  gap: 14px;
-  padding: 10px 12px 12px;
-  border: 1px solid color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 28%, var(--tgui--outline));
-  border-radius: 8px 8px 0 0;
-  background: color-mix(in srgb, var(--tgui--secondary_bg_color, #ffffff) 98%, var(--tg-theme-button-color, #2ea6ff));
-  color: var(--tgui--text_color);
-  box-shadow: 0 -18px 56px color-mix(in srgb, #000 34%, transparent);
-  animation: wallet-sheet-enter 170ms ease-out;
-}
-
-.wallet-sheet-handle {
-  justify-self: center;
-  width: 42px;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--tgui--outline);
-}
-
-.wallet-sheet-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.wallet-sheet-icon {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 18%, var(--tgui--bg_color));
-  color: var(--tg-theme-button-color, #2ea6ff);
-}
-
-.wallet-sheet-title {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.wallet-sheet-title strong,
-.wallet-sheet-title span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.wallet-sheet-title strong {
-  font-size: 16px;
-  line-height: 1.2;
-}
-
-.wallet-sheet-title span {
-  color: var(--tgui--subtitle_text_color);
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-.wallet-sheet-info {
-  display: grid;
-  gap: 8px;
-}
-
-.wallet-sheet-info div {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-  padding: 10px;
-  border: 1px solid var(--tgui--outline);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--tgui--bg_color) 52%, var(--tgui--secondary_bg_color));
-}
-
-.wallet-sheet-info span {
-  color: var(--tgui--subtitle_text_color);
-  font-size: 12px;
-  line-height: 1.15;
-}
-
-.wallet-sheet-info strong {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  color: var(--tgui--text_color);
-  font-size: 15px;
-  line-height: 1.25;
-}
-
-.wallet-sheet-actions {
-  display: grid;
-  grid-template-columns: minmax(52px, 18%) 1fr;
-  gap: 8px;
-}
-
-.wallet-copy-button,
-.wallet-disconnect-button {
-  display: inline-grid;
-  place-items: center;
-  min-height: 48px;
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
-  font: inherit;
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    transform 120ms ease,
-    filter 120ms ease;
-}
-
-.wallet-copy-button {
-  color: var(--tg-theme-button-color, #2ea6ff);
-  background: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 14%, var(--tgui--bg_color));
-}
-
-.wallet-disconnect-button {
-  min-width: 0;
-  padding: 0 14px;
-  overflow: hidden;
-  background: var(--tg-theme-button-color, #2ea6ff);
-  color: var(--tg-theme-button-text-color, #ffffff);
-  font-size: 15px;
-  font-weight: 650;
-  line-height: 18px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.wallet-copy-button:active,
-.wallet-disconnect-button:active {
-  transform: scale(0.98);
-}
-
-.wallet-copy-button:focus-visible,
-.wallet-disconnect-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 62%, transparent);
-  outline-offset: 2px;
-}
-
 .telegram-only-shell {
   display: flex;
   flex-direction: column;
@@ -447,6 +225,7 @@
   width: 100%;
   max-width: 100vw;
   min-width: 0;
+  padding: 0 8px;
   min-height: 100%;
   margin-inline: auto;
 }
@@ -1087,37 +866,7 @@
   }
 }
 
-@keyframes wallet-sheet-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes wallet-sheet-enter {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (hover: hover) and (pointer: fine) {
-  .app-tonconnect-button:hover {
-    border-color: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 58%, transparent);
-    transform: translateY(-1px);
-  }
-
-  .wallet-copy-button:hover,
-  .wallet-disconnect-button:hover {
-    filter: brightness(1.04);
-  }
-
   .screen :where(button:not(:disabled), a, [role="button"]):hover {
     filter: brightness(1.03);
   }
@@ -1138,11 +887,6 @@
   }
 
   .screen :where(button, a, [role="button"]),
-  .app-tonconnect-button,
-  .wallet-sheet-backdrop,
-  .wallet-sheet,
-  .wallet-copy-button,
-  .wallet-disconnect-button,
   .referral-modal-backdrop,
   .referral-modal,
   .menu-card,
@@ -1152,10 +896,6 @@
   }
 
   .screen :where(button:not(:disabled), a, [role="button"]):active,
-  .app-tonconnect-button:active,
-  .app-tonconnect-button:hover,
-  .wallet-copy-button:active,
-  .wallet-disconnect-button:active,
   .menu-card:hover,
   .referral-stats-grid div:hover {
     transform: none;
@@ -1184,6 +924,42 @@
   .referral-modal-actions {
     grid-template-columns: 1fr;
   }
+
+  .app-header {
+    padding: calc(env(safe-area-inset-top, 0px) + 6px) 10px 6px;
+    gap: 4px;
+  }
+
+  .app-brand {
+    font-size: 15px;
+  }
+
+  .app-topnav {
+    gap: 2px;
+  }
+
+  .referral-body {
+    padding: 8px 10px;
+  }
+
+  .screen .tgui-section {
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 300px) {
+  .app-brand {
+    font-size: 13px;
+  }
+
+  .app-header-main {
+    gap: 6px;
+  }
+
+  .app-topnav-item {
+    font-size: 11px;
+    gap: 3px;
+  }
 }
 
 @media (min-width: 600px) {
@@ -1206,30 +982,6 @@
 
   .app-topnav {
     display: flex;
-  }
-
-  .app-tonconnect-button {
-    max-width: 260px;
-  }
-
-  .wallet-sheet-backdrop {
-    display: none;
-  }
-
-  .wallet-sheet {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    bottom: auto;
-    left: auto;
-    width: min(360px, calc(100vw - 32px));
-    border-radius: 8px;
-    box-shadow: 0 18px 54px color-mix(in srgb, #000 28%, transparent);
-    animation-name: referral-modal-enter;
-  }
-
-  .wallet-sheet-handle {
-    display: none;
   }
 
   .app-tabbar {

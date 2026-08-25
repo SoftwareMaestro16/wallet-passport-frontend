@@ -50,9 +50,9 @@
   },
   "profile": {
     "title": "Profile",
-    "verifying": "Verifying wallet signature...",
-    "verifyError": "Could not verify wallet ownership. Try reconnecting.",
-    "backendUnreachable": "Server unreachable. Check your connection and try again.",
+    "verifying": "Connecting...",
+    "verifyError": "Could not connect. Try reconnecting your wallet.",
+    "backendUnreachable": "No connection to server. Check your internet and try again.",
     "retry": "Retry",
     "scoreLabel": "TON Score",
     "walletLabel": "Wallet",
@@ -104,7 +104,7 @@
       "title": "Reveal",
       "ready": "Wallet profile is ready",
       "subtitle": "Result is based on the last completed scan.",
-      "footer": "Data is displayed from backend/chain state; the frontend does not compute Score or sign metadata."
+      "footer": ""
     },
     "summary": {
       "title": "Wallet Score",
@@ -124,8 +124,8 @@
       "actionable_other": "{{count}} can be minted or refreshed now",
       "noActionable": "No new mint is available yet",
       "cta": "Go to mint",
-      "footer": "The Mint screen currently issues the main Passport on testnet; the permit comes from the backend and is forwarded unchanged.",
-      "footerLocked": "Categories are shown honestly from backend data; mint becomes active when the main Passport is eligible.",
+      "footer": "",
+      "footerLocked": "",
       "empty": "No eligible categories",
       "emptyHint": "Keep using the wallet and scan again later.",
       "status": {
@@ -168,7 +168,7 @@
         "transfers": "Jetton transfers",
         "burns": "Jetton burns",
         "masters": "Unique Jettons held",
-        "partialData": "Some Jetton data sources were unavailable during the last scan — numbers may be incomplete."
+        "partialData": "Some data sources were unavailable during the last scan — numbers may be incomplete."
       },
       "builder": {
         "title": "Builder",
@@ -217,9 +217,9 @@
       "go": "Open",
       "mint": "Mint Passport",
       "refresh": "Refresh Passport",
-      "refreshHint": "Prepared UI state without Stars payment or TonConnect transaction.",
+      "refreshHint": "",
       "refreshPrice": "25 Stars",
-      "viewRelics": "View Rare Relics",
+      "viewRelics": "Rare Relics",
       "viewRelicsHint": "Coming soon.",
       "share": "Share Score",
       "shareHint": "Coming soon.",
@@ -239,12 +239,12 @@
     "retry": "Retry",
     "refresh": {
       "title": "Refresh",
-      "footer": "Real Stars payment and the refresh transaction are not wired in the MVP.",
+      "footer": "",
       "priceLabel": "Refresh price",
       "price": "25 Stars",
       "prepareButton": "Prepare refresh",
       "preparedTitle": "Refresh prepared",
-      "preparedSubtitle": "The UI state is ready; payment and the signed refresh permit will be wired after the backend/contract interface."
+      "preparedSubtitle": ""
     }
   },
   "testnetGuard": {
@@ -278,36 +278,36 @@
     "copied": "Copied"
   },
   "referral": {
-    "title": "Referrals",
-    "ready": "Your referral link",
-    "connectToGet": "Connect your wallet to receive a referral link",
+    "title": "Invite a friend",
+    "ready": "Your invite link",
+    "connectToGet": "Connect your wallet to get an invite link",
     "copy": "Copy",
     "shareInline": "Share",
     "info": {
-      "open": "How referrals work",
-      "title": "How referrals work",
-      "body": "A referral link tracks the invited user's Wallet Passport path: app open, wallet connection, and first scan.",
+      "open": "How it works",
+      "title": "How it works",
+      "body": "Send the link to a friend — when they open the app, connect a wallet, and complete a scan, it shows up in your stats.",
       "inviter": {
-        "title": "For the inviter",
-        "body": "Your profile prepares invited, connected, and scanned credits: who joined through your link, connected a wallet, and completed a scan."
+        "title": "What you see",
+        "body": "Your profile shows how many friends followed the link, connected a wallet, and completed a scan."
       },
       "invited": {
-        "title": "For the invited user",
-        "body": "The invited user lands directly in the Mini App flow and can connect a wallet without entering a code."
+        "title": "What your friend gets",
+        "body": "Your friend goes straight into the app and can connect their wallet right away."
       },
       "scanned": {
         "title": "When a scan counts",
-        "body": "A scan counts only after wallet analysis finishes. Later passport refreshes can be tracked separately."
+        "body": "A scan counts once the wallet analysis finishes."
       },
-      "reputationNote": "Referrals do not farm Score: they do not change reputation, Passport categories, or NFT rarity.",
+      "reputationNote": "Invites do not affect your Score or passport categories.",
       "close": "Got it"
     },
     "stats": {
-      "invited": "invited",
-      "walletConnected": "connected wallet",
-      "scanned": "completed scan"
+      "invited": "followed link",
+      "walletConnected": "connected",
+      "scanned": "scanned"
     },
-    "footer": "Link format: t.me/WalletPassportXBot/scan?startapp=ref_{code}."
+    "footer": ""
   },
   "common": {
     "loading": "Loading...",
