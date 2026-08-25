@@ -33,8 +33,6 @@ export function MintScreen() {
   const { t } = useTranslation();
   const { isConnected, tonConnectUI } = useTonConnectAccount();
   const [state, setState] = useState<MintState>({ status: "idle" });
-  const [refreshPrepared, setRefreshPrepared] = useState(false);
-
   async function handleMint() {
     hapticImpact("medium");
     setState({ status: "preparing" });
@@ -56,11 +54,6 @@ export function MintScreen() {
       hapticNotification("error");
       setState({ status: "error", message });
     }
-  }
-
-  function handleRefreshPrepare() {
-    hapticImpact("light");
-    setRefreshPrepared(true);
   }
 
   const isBusy = state.status === "preparing" || state.status === "pending";
@@ -105,27 +98,6 @@ export function MintScreen() {
         </Cell>
       </Section>
 
-      <Section header={t("mint.refresh.title")} footer={t("mint.refresh.footer")}>
-        <div className="status-stack">
-          <div className="price-row">
-            <span>{t("mint.refresh.priceLabel")}</span>
-            <strong>{t("mint.refresh.price")}</strong>
-          </div>
-          <Button
-            mode="outline"
-            stretched
-            disabled={!isConnected}
-            onClick={handleRefreshPrepare}
-          >
-            {t("mint.refresh.prepareButton")}
-          </Button>
-        </div>
-        {refreshPrepared && (
-          <Cell multiline subtitle={t("mint.refresh.preparedSubtitle")}>
-            {t("mint.refresh.preparedTitle")}
-          </Cell>
-        )}
-      </Section>
     </div>
   );
 }

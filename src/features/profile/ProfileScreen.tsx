@@ -375,23 +375,18 @@ function ReferralBlock({
         {!isConnected ? (
           <Cell multiline>{t("referral.connectToGet")}</Cell>
         ) : (
-          <>
-            <Cell
-              multiline
-              subtitle={<span className="mono referral-link">{referralLink}</span>}
-              after={
-                <div className="referral-actions">
-                  <Button size="s" mode="outline" disabled={!referralCode} onClick={onCopy}>
-                    {t("referral.copy")}
-                  </Button>
-                  <Button size="s" disabled={!referralCode} onClick={onShare}>
-                    {t("referral.shareInline")}
-                  </Button>
-                </div>
-              }
-            >
-              {referralCode ? t("referral.ready") : t("referral.connectToGet")}
-            </Cell>
+          <div className="referral-body">
+            <div className="referral-link-row">
+              <span className="mono referral-link">{referralLink}</span>
+            </div>
+            <div className="referral-actions">
+              <Button size="s" mode="outline" disabled={!referralCode} onClick={onCopy} stretched>
+                {t("referral.copy")}
+              </Button>
+              <Button size="s" disabled={!referralCode} onClick={onShare} stretched>
+                {t("referral.shareInline")}
+              </Button>
+            </div>
             {referralStats && (
               <div className="referral-stats-grid">
                 <div>
@@ -408,7 +403,7 @@ function ReferralBlock({
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
       </Section>
 
@@ -578,13 +573,6 @@ function ProfileResult({
           subtitle={mainCategory?.existsOnChain ? t("profile.sections.passports.minted", { revision: mainCategory.revision }) : undefined}
         >
           {t("profile.actions.mint")}
-        </Cell>
-        <Cell
-          multiline
-          subtitle={t("profile.actions.refreshHint")}
-          after={<Badge type="number">{t("profile.actions.refreshPrice")}</Badge>}
-        >
-          {t("profile.actions.refresh")}
         </Cell>
       </Section>
     </>

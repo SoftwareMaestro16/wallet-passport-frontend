@@ -190,7 +190,7 @@ export function shareReferralViaInlineMode(referralCode: string): boolean {
   const app = rawWebApp();
   try {
     if (app?.switchInlineQuery) {
-      app.switchInlineQuery(`ref_${referralCode}`, ["users", "groups", "channels"]);
+      app.switchInlineQuery("invite", ["users", "groups", "channels"]);
       return true;
     }
   } catch {
