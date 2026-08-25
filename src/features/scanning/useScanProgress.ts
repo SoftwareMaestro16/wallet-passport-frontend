@@ -46,7 +46,12 @@ function txFetchPct(job: ScanStatusResponse): number {
 
 function overallRealProgressPct(job: ScanStatusResponse, stepIndex: number): number {
   if (stepIndex === STEP.LOADING_TX) return Math.max(2, Math.round(txFetchPct(job) * 0.72));
-  if (stepIndex === STEP.ANALYZING_TRACES) return 78;
+  if (stepIndex === STEP.ANALYZING_TRACES) {
+    if (job.txTotal && job.txTotal > 0) {
+      return 72 + Math.round((job.txFetched / job.txTotal) * 16);
+    }
+    return 78;
+  }
   if (stepIndex === STEP.NFTS_TG) return 90;
   if (stepIndex === STEP.SCORE) return 97;
   return 8;
@@ -68,6 +73,13 @@ function progressDetail(job: ScanStatusResponse, stepIndex: number): Pick<ScanPr
   }
 
   if (stepIndex === STEP.ANALYZING_TRACES) {
+    if (job.txTotal && job.txTotal > 0) {
+      return {
+        detailKey: "scanning.progress.canonicalizingOfTotal",
+        detailValues: { processed: job.txFetched, total: job.txTotal, new: job.newTxFetched },
+      };
+    }
+
     return {
       detailKey: "scanning.progress.canonicalizing",
       detailValues: { loaded: Math.max(job.txFetched, job.txTotal ?? 0), new: job.newTxFetched },

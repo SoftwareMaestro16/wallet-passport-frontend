@@ -37,6 +37,7 @@
       "starting": "Starting the scan and requesting wallet history.",
       "loadedOfTotal": "Loaded {{loaded}} of {{total}} transactions.",
       "loaded": "Loaded {{loaded}} transactions.",
+      "canonicalizingOfTotal": "Parsing and saving {{processed}} of {{total}} transactions. New since the previous scan: {{new}}.",
       "canonicalizing": "Parsing and storing {{loaded}} transactions. New since the previous scan: {{new}}.",
       "auxiliary": "Loading auxiliary data and linking it to {{loaded}} transactions. New: {{new}}.",
       "metrics": "Computing wallet metrics and Wallet Score from {{loaded}} transactions. New: {{new}}.",
