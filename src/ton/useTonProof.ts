@@ -28,11 +28,20 @@ let verifyPromiseCache: { payload: string; promise: Promise<TonProofVerifyRespon
  * in-flight/settled promise across every concurrent instance closes that race.
  *
  * Invalidated (a) on failure, so the next mount/retry actually fetches a new payload instead of
- * replaying a rejected promise, (b) once a wallet connection is observed, since the payload has
- * either just been consumed by that connect or is now irrelevant, and (c) after
+ * replaying a rejected promise, (b) once `verify()` actually SUCCEEDS, since that payload has now
+ * been consumed server-side and a future reconnect needs a fresh one, and (c) after
  * `REFRESH_PAYLOAD_CACHE_MAX_AGE_MS` (comfortably under the backend's 300s TTL —
  * `server/src/config/index.ts`'s `tonProofPayloadTtlSeconds`), so an abandoned/cancelled connect
  * attempt doesn't leave a near-expired payload cached indefinitely for the next attempt to reuse.
+ *
+ * Deliberately NOT invalidated merely because `wallet` (from `useTonWallet()`) becomes truthy —
+ * an earlier version cleared the cache as soon as any wallet object appeared, but TonConnect's own
+ * connect handshake can populate a partial `wallet` before `connectItems.tonProof` is actually
+ * attached. Clearing that early meant navigating between screens (or any remount) while the user
+ * was still approving in their wallet app fetched a SECOND payload and overwrote
+ * `setConnectRequestParameters` out from under the connection already in flight — confirmed in
+ * production (multiple `/auth/ton-proof/payload` calls, 8-16s apart, before a single failing
+ * `verify()`). Only a genuinely successful `verify()` proves the payload was consumed.
  */
 const REFRESH_PAYLOAD_CACHE_MAX_AGE_MS = 4 * 60 * 1000;
 let refreshPayloadCache: { promise: Promise<void>; createdAt: number } | null = null;
@@ -87,12 +96,6 @@ export function useTonProof() {
     void refreshPayload();
   }, [refreshPayload]);
 
-  useEffect(() => {
-    // The payload has either just been consumed by this connect or is now stale — either way the
-    // next disconnect+reconnect must fetch a genuinely fresh one, not replay this resolved promise.
-    if (wallet) refreshPayloadCache = null;
-  }, [wallet]);
-
   const tonProofResult = wallet?.connectItems?.tonProof as TonProofItemReplySuccess | undefined;
 
   const verify = useCallback(async () => {
@@ -129,6 +132,9 @@ export function useTonProof() {
         // Cached per-wallet code (see shared/referral.ts) is only a fallback for the brief
         // window before ProfileScreen's `GET /referrals/me` resolves — see useReferralMe.
         saveReferralCode(result.binding.referralCode);
+        // Only NOW is it certain this payload was actually consumed server-side — see
+        // refreshPayloadCache's doc comment for why this replaced a wallet-truthy-based clear.
+        refreshPayloadCache = null;
       })
       .catch((err) => {
         const message = err instanceof ApiError
