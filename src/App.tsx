@@ -14,8 +14,6 @@ import { hapticSelection, isTelegramMiniApp, syncTelegramChrome, useTelegramAppe
 import { useTonConnectAccount } from "./ton/useTonConnectAccount";
 import { useVerifiedProfile } from "./ton/useVerifiedProfile";
 import { TelegramOnlyGate } from "./shared/TelegramOnlyGate";
-import { DebugPanel } from "./shared/DebugPanel";
-import { pushDebug } from "./shared/debug";
 import "@telegram-apps/telegram-ui/dist/styles.css";
 import "./App.css";
 
@@ -97,11 +95,10 @@ function TonConnectThemeSync({ theme }: { theme: AppTheme }) {
 function AppShell({ theme }: { theme: AppTheme }) {
   const { t } = useTranslation();
   const { pathname } = useLocation();
-  const { isConnected, address, chain } = useTonConnectAccount();
-  const { state, hasProof } = useVerifiedProfile();
-  useEffect(() => {
-    pushDebug(`state: connected=${isConnected} hasProof=${hasProof} verify=${state.status} addr=${address?.slice(0, 10) || "-"} chain=${chain || "-"}`);
-  }, [isConnected, hasProof, state.status, address, chain]);
+  // Mounted here (in addition to whichever screen is active) so the ton_proof verify flow starts
+  // as soon as the app shell renders, not only once the user navigates to a screen that reads it.
+  useTonConnectAccount();
+  useVerifiedProfile();
   const headerTitle = t("connect.title").replace(/^Wallet\s+/u, "");
   const showNav = pathname !== "/scanning";
 
@@ -128,7 +125,6 @@ function AppShell({ theme }: { theme: AppTheme }) {
           </Routes>
         </div>
       </main>
-      <DebugPanel />
     </div>
   );
 }
