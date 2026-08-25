@@ -2,7 +2,24 @@ import { useEffect, useState } from "react";
 import WebApp from "@twa-dev/sdk";
 
 /**
- * Thin wrapper around @twa-dev/sdk's WebApp singleton.
+ * `@twa-dev/sdk` (v8.0.2) bundles its own vendored copy of Telegram's WebApp implementation and
+ * unconditionally overwrites `window.Telegram.WebApp` with it. That vendored copy's own
+ * `location.hash` parsing has proven unreliable in production on Telegram Desktop for at least
+ * `initData` (see `getTelegramInitData`'s doc comment — confirmed via live diagnostics: the real
+ * hash was present and non-empty, but the SDK's own parsed value was empty regardless). Given one
+ * property from that parsing pass is known-buggy, every other property derived the same way
+ * (`themeParams`, `colorScheme`, `platform`) is suspect too — read them all directly off the raw
+ * global instead of trusting the `@twa-dev/sdk` import, rather than fixing one property at a time
+ * reactively as each turns out to be wrong.
+ */
+function rawWebApp(): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (window as any).Telegram?.WebApp;
+}
+
+/**
+ * Thin wrapper around @twa-dev/sdk's WebApp singleton — still used for method calls
+ * (ready/expand/onEvent) which work correctly; only property reads are suspect (see `rawWebApp`).
  * Call `bootstrapTelegram()` once on app mount (see src/main.tsx).
  */
 export function bootstrapTelegram(): void {
@@ -24,7 +41,7 @@ export function bootstrapTelegram(): void {
  */
 function applyThemeVars(): void {
   const root = document.documentElement.style;
-  const theme = WebApp.themeParams;
+  const theme = rawWebApp()?.themeParams ?? {};
 
   const map: Record<string, string | undefined> = {
     "--tg-theme-bg-color": theme.bg_color,
@@ -52,9 +69,7 @@ function applyThemeVars(): void {
 /** Telegram's `language_code` for the current user, e.g. "ru", "en", "uk". */
 export function getTelegramLanguageCode(): string | undefined {
   try {
-    // Same @twa-dev/sdk initData bug as getTelegramInitData below — read the raw global directly.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.language_code;
+    return rawWebApp()?.initDataUnsafe?.user?.language_code;
   } catch {
     return undefined;
   }
@@ -64,20 +79,15 @@ export function getTelegramLanguageCode(): string | undefined {
  * Raw initData string — sent to the backend for Telegram auth validation. Never parsed/trusted
  * client-side.
  *
- * Deliberately reads `window.Telegram.WebApp.initData` directly instead of `@twa-dev/sdk`'s
+ * Reads the raw global directly (see `rawWebApp`'s doc comment) rather than `@twa-dev/sdk`'s
  * imported `WebApp` singleton. Confirmed via production diagnostics (2026-08-25): on Telegram
  * Desktop, with the exact same `location.hash` present and non-empty in both cases,
  * `window.Telegram.WebApp.initData` correctly returned the real value while `@twa-dev/sdk`
- * (v8.0.2) `WebApp.initData` returned an empty string every time — a bug/stale-reference
- * somewhere in that package's own hash parsing, not a timing race (waiting longer never helped)
- * and not our router (same result before and after switching off HashRouter). `@twa-dev/sdk`'s
- * `WebApp` remains in use for everything else (ready/expand/theme/onEvent), which all work
- * correctly — this bypass is scoped to `initData`/`initDataUnsafe` specifically.
+ * (v8.0.2) `WebApp.initData` returned an empty string every time.
  */
 export function getTelegramInitData(): string {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (window as any).Telegram?.WebApp?.initData ?? "";
+    return rawWebApp()?.initData ?? "";
   } catch {
     return "";
   }
@@ -106,7 +116,7 @@ function resolvePlatform(): "ios" | "base" {
   try {
     // telegram-ui's AppRoot only distinguishes "ios" vs "base" (everything else renders the
     // Android/desktop/web look, which is closest to how those Telegram clients actually render).
-    return WebApp.platform === "ios" ? "ios" : "base";
+    return rawWebApp()?.platform === "ios" ? "ios" : "base";
   } catch {
     return "base";
   }
@@ -122,8 +132,9 @@ function resolvePlatform(): "ios" | "base" {
  */
 function resolveAppearance(): "light" | "dark" {
   try {
-    const hex = WebApp.themeParams.bg_color;
-    if (!hex) return WebApp.colorScheme === "dark" ? "dark" : "light";
+    const app = rawWebApp();
+    const hex = app?.themeParams?.bg_color;
+    if (!hex) return app?.colorScheme === "dark" ? "dark" : "light";
 
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
