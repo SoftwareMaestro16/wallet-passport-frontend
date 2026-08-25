@@ -4,6 +4,34 @@
 // static frontend with no API routes of its own.
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://walletpassport-185-163-47-190.sslip.io";
 
+const SESSION_TOKEN_STORAGE_KEY = "wallet-passport-session-token";
+
+/**
+ * iOS WebKit's Intelligent Tracking Prevention drops or evicts the cross-site `wp_session`
+ * cookie inside Telegram's in-app WKWebView — confirmed in production: telegramAuth sets the
+ * cookie fine, but the ton_proof/verify call a few seconds later (after the round trip through
+ * Tonkeeper) arrives with no cookie at all, and the user's wallet connect silently fails. The
+ * server now also returns the raw session token in `/auth/telegram`'s JSON body; we resend it
+ * as `Authorization: Bearer <token>` on every request, which isn't subject to any cookie
+ * policy. sessionStorage (not a module-level variable) so a page reload — which several
+ * Telegram clients do after returning from an external wallet app — doesn't lose it.
+ */
+function getSessionToken(): string | null {
+  try {
+    return sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function setSessionToken(token: string): void {
+  try {
+    sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token);
+  } catch {
+    // sessionStorage unavailable (private mode, etc.) — the cookie fallback still applies.
+  }
+}
+
 export class ApiError extends Error {
   status: number;
   body: unknown;
@@ -24,19 +52,19 @@ type RequestOptions = Omit<RequestInit, "body"> & {
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, initData, headers, ...rest } = options;
+  const sessionToken = getSessionToken();
 
   const res = await fetch(`${BASE_URL}${path}`, {
     ...rest,
-    // The API and this static frontend are on different origins by design (no shared domain),
-    // so the session cookie (server/src/auth/session.ts) needs an explicit opt-in to cross-origin
-    // credentials — the server's CORS config allows it for this exact origin, but the browser
-    // still won't attach/store the cookie without this on every request.
+    // Cookie kept as a best-effort fallback for clients where cross-site cookies do persist —
+    // see getSessionToken's doc comment for why it can't be relied on alone.
     credentials: "include",
     headers: {
       // Fastify's default JSON parser rejects an empty body when this header is present
       // (FST_ERR_CTP_EMPTY_JSON_BODY) — only send it when there's an actual body to parse.
       ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
       ...(initData ? { "X-Telegram-Init-Data": initData } : {}),
+      ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -74,6 +102,7 @@ export interface TelegramAuthResponse {
     referralCode: string;
   };
   expiresAt: string;
+  sessionToken: string;
 }
 
 export interface TonProofPayloadResponse {
@@ -312,8 +341,11 @@ export const api = {
   // only this call issues (see server/src/http/routes/auth.ts). initData is sent as a header on
   // every request already, but nothing lazily creates the session/user from it — this is the one
   // explicit login step.
-  telegramAuth: (initData: string) =>
-    apiClient.post<TelegramAuthResponse>("/auth/telegram", { initData }, { initData }),
+  telegramAuth: async (initData: string) => {
+    const result = await apiClient.post<TelegramAuthResponse>("/auth/telegram", { initData }, { initData });
+    setSessionToken(result.sessionToken);
+    return result;
+  },
 
   getTonProofPayload: (initData: string) =>
     apiClient.post<TonProofPayloadResponse>("/auth/ton-proof/payload", undefined, { initData }),
