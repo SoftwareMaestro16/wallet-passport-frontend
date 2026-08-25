@@ -119,6 +119,33 @@ export function getTelegramLanguageCode(): string | undefined {
   }
 }
 
+export interface TelegramUserData {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  photoUrl?: string;
+  isPremium?: boolean;
+  languageCode?: string;
+}
+
+/** Telegram user fields are presentation data only; identity remains backend-validated initData. */
+export function getTelegramUserData(): TelegramUserData | null {
+  try {
+    const user = rawWebApp()?.initDataUnsafe?.user;
+    if (!user) return null;
+    return {
+      firstName: user.first_name,
+      lastName: user.last_name,
+      username: user.username,
+      photoUrl: user.photo_url,
+      isPremium: user.is_premium,
+      languageCode: user.language_code,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function useTelegramMainButton(options: {
   text: string;
   visible: boolean;

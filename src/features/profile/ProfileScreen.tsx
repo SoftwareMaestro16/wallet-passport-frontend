@@ -5,9 +5,8 @@ import { Section, Cell, Avatar, Spinner, Button, Badge, Switch, IconButton } fro
 import { Info } from "lucide-react";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
-import { ScoreBar } from "../../shared/ScoreBar";
 import { TestnetGuard } from "../../shared/TestnetGuard";
-import { hapticImpact, hapticSelection, shareReferralViaInlineMode } from "../../app/telegram";
+import { getTelegramUserData, hapticImpact, hapticSelection, shareReferralViaInlineMode } from "../../app/telegram";
 import { setLanguage } from "../../app/i18n";
 import { buildReferralLink, getSavedReferralCode } from "../../shared/referral";
 import { useWalletProfile } from "./useWalletProfile";
@@ -77,16 +76,6 @@ function dominantSummaryKey(code: ScoreFactorCode | undefined): string {
   return "profile.result.summary.balanced";
 }
 
-function ComingSoonCell({ title, body, badge }: { title: string; body: string; badge: string }) {
-  return (
-    <Section header={title}>
-      <Cell subtitle={body} after={<Badge type="number">{badge}</Badge>}>
-        {title}
-      </Cell>
-    </Section>
-  );
-}
-
 function StatCell({ label, value }: { label: string; value: ReactNode }) {
   return <Cell subtitle={label}>{value}</Cell>;
 }
@@ -128,15 +117,23 @@ function applyProfileTheme(theme: ProfileTheme): void {
 
 export function ProfileScreen() {
   const { t, i18n } = useTranslation();
-  const { address, tonConnectUI } = useTonConnectAccount();
+  const { address } = useTonConnectAccount();
   const { isConnected, state, retry } = useVerifiedProfile();
   const lang = i18n.language;
   const currentLanguage = lang === "ru" ? "ru" : "en";
   const [theme, setTheme] = useState<ProfileTheme>(getInitialProfileTheme);
+  const telegramUser = getTelegramUserData();
 
   const walletProfile = useWalletProfile(state.status === "success" ? address : undefined);
   const walletPassports = useWalletPassports(state.status === "success" ? address : undefined);
   const referralMe = useReferralMe(state.status === "success");
+
+  const referralCode =
+    referralMe.state.status === "ready" ? referralMe.state.data.referral.code : getSavedReferralCode();
+  const referralLink =
+    referralMe.state.status === "ready" ? referralMe.state.data.referral.link : buildReferralLink(referralCode);
+  const referralStats = referralMe.state.status === "ready" ? referralMe.state.data.stats : null;
+  const [referralInfoOpen, setReferralInfoOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -144,37 +141,52 @@ export function ProfileScreen() {
     applyProfileTheme(theme);
   }, [theme]);
 
-  if (!isConnected) {
-    return (
-      <div className="screen profile-screen">
-        <Section header={t("profile.title")}>
-          <Cell>{t("mint.notConnected")}</Cell>
-        </Section>
-      </div>
-    );
+  function handleCopyReferral() {
+    hapticSelection();
+    void navigator.clipboard?.writeText(referralLink);
   }
+
+  function handleShareReferral() {
+    hapticImpact("light");
+    if (!referralCode || shareReferralViaInlineMode(referralCode)) return;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}`, "_blank", "noopener,noreferrer");
+  }
+
+  const userInfo = referralMe.state.status === "ready" ? referralMe.state.data.user : null;
 
   return (
     <div className="screen profile-screen">
       <Section header={t("profile.title")}>
-        {referralMe.state.status === "ready" && (
+        {userInfo ? (
           <Cell
             before={
               <Avatar
                 size={40}
-                src={referralMe.state.data.user.photoUrl ?? undefined}
-                acronym={userAcronym(referralMe.state.data.user.firstName, referralMe.state.data.user.username)}
+                src={userInfo.photoUrl ?? undefined}
+                acronym={userAcronym(userInfo.firstName, userInfo.username)}
               />
             }
-            subtitle={userSubtitle(referralMe.state.data.user.username, referralMe.state.data.user.languageCode, t)}
-            after={referralMe.state.data.user.isPremium ? <Badge type="number">Premium</Badge> : undefined}
+            subtitle={userSubtitle(userInfo.username, userInfo.languageCode, t)}
+            after={userInfo.isPremium ? <Badge type="number">Premium</Badge> : undefined}
           >
-            {displayUserName(referralMe.state.data.user.firstName, referralMe.state.data.user.lastName, referralMe.state.data.user.username)}
+            {displayUserName(userInfo.firstName, userInfo.lastName, userInfo.username)}
           </Cell>
-        )}
-        <Cell before={<Avatar size={40} acronym={acronymFor(address)} />} subtitle={t("profile.walletLabel")}>
-          <span className="mono">{shortAddress(address)}</span>
-        </Cell>
+        ) : telegramUser ? (
+          <Cell
+            before={
+              <Avatar
+                size={40}
+                src={telegramUser.photoUrl}
+                acronym={userAcronym(telegramUser.firstName ?? null, telegramUser.username ?? null)}
+              />
+            }
+            subtitle={userSubtitle(telegramUser.username ?? null, telegramUser.languageCode ?? null, t)}
+            after={telegramUser.isPremium ? <Badge type="number">Premium</Badge> : undefined}
+          >
+            {displayUserName(telegramUser.firstName ?? null, telegramUser.lastName ?? null, telegramUser.username ?? null)}
+          </Cell>
+        ) : null}
+        {isConnected && <Cell before={<Avatar size={40} acronym={acronymFor(address)} />} subtitle={t("profile.walletLabel")}><span className="mono">{shortAddress(address)}</span></Cell>}
       </Section>
 
       <Section header={t("profile.settings.title")}>
@@ -210,7 +222,20 @@ export function ProfileScreen() {
         </Cell>
       </Section>
 
-      <TestnetGuard />
+      {isConnected && <TestnetGuard />}
+
+      <ReferralBlock
+        isConnected={isConnected}
+        referralCode={referralCode}
+        referralLink={referralLink}
+        referralStats={referralStats}
+        referralInfoOpen={referralInfoOpen}
+        setReferralInfoOpen={setReferralInfoOpen}
+        onCopy={handleCopyReferral}
+        onShare={handleShareReferral}
+        lang={lang}
+        t={t}
+      />
 
       {state.status === "verifying" && (
         <Section>
@@ -294,261 +319,96 @@ export function ProfileScreen() {
           lang={lang}
           t={t}
           navigate={navigate}
-          referralMe={referralMe}
         />
       )}
-
-      <Button mode="outline" stretched onClick={() => tonConnectUI.disconnect()}>
-        {t("profile.disconnect")}
-      </Button>
     </div>
   );
 }
 
-function ProfileResult({
-  data,
-  passports,
+function ReferralBlock({
+  isConnected,
+  referralCode,
+  referralLink,
+  referralStats,
+  referralInfoOpen,
+  setReferralInfoOpen,
+  onCopy,
+  onShare,
   lang,
   t,
-  navigate,
-  referralMe,
 }: {
-  data: WalletProfileResponse;
-  passports: ReturnType<typeof useWalletPassports>;
+  isConnected: boolean;
+  referralCode: string | null;
+  referralLink: string;
+  referralStats: { invited: number; walletConnected: number; scanned: number } | null;
+  referralInfoOpen: boolean;
+  setReferralInfoOpen: (open: boolean) => void;
+  onCopy: () => void;
+  onShare: () => void;
   lang: string;
   t: ReturnType<typeof useTranslation>["t"];
-  navigate: (path: string) => void;
-  referralMe: ReturnType<typeof useReferralMe>;
 }) {
-  const { score, stats } = data;
-  const topFactors = score.dominantFactors ?? [...score.factors].sort((a, b) => b.value - a.value).slice(0, 3);
-  const firstTx = formatDate(stats.firstTxAt, lang);
-  const passportsList = passports.state.status === "ready" ? passports.state.data.categories : null;
-  const mainCategory = passportsList?.find((c) => c.category === "passport");
-  const referralCode =
-    referralMe.state.status === "ready" ? referralMe.state.data.referral.code : getSavedReferralCode();
-  const referralLink =
-    referralMe.state.status === "ready" ? referralMe.state.data.referral.link : buildReferralLink(referralCode);
-  const referralStats = referralMe.state.status === "ready" ? referralMe.state.data.stats : null;
-  const [referralInfoOpen, setReferralInfoOpen] = useState(false);
-
-  function handleCopyReferral() {
-    hapticSelection();
-    void navigator.clipboard?.writeText(referralLink);
-  }
-
-  function handleShareReferral() {
-    hapticImpact("light");
-    if (!referralCode || shareReferralViaInlineMode(referralCode)) return;
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}`, "_blank", "noopener,noreferrer");
-  }
-
   return (
     <>
-      <ProfileResultBlock data={data} topFactors={topFactors} lang={lang} t={t} />
-
-      <Section header={t("profile.summary.title")}>
-        <div className="summary-score-body">
-          <ScoreBar score={score.tonScore} max={1000} label={`${t("profile.summary.title")} — ${score.tier}`} />
-        </div>
-        <StatCell
-          label={t("profile.summary.walletAge")}
-          value={t("profile.summary.walletAgeDays", { count: Math.round(stats.walletAgeDays) })}
-        />
-        <StatCell label={t("profile.summary.transactions")} value={formatNumber(stats.totalTxCount, lang)} />
-        <StatCell label={t("profile.summary.activeDays")} value={formatNumber(stats.activeDaysCount, lang)} />
-        <StatCell
-          label={t("profile.summary.economicVolume")}
-          value={`${formatTon(stats.economicVolumeNanoTon, lang)} TON`}
-        />
-        <Cell subtitle={t("profile.summary.strongestCategories")} multiline>
-          {topFactors.map((f) => `${t(factorLabelKey(f.code))} ${Math.round(f.value)}`).join(" · ")}
-        </Cell>
-      </Section>
-
-      <Section header={t("profile.sections.overview.title")} footer={stats.totalTxCount === 0 ? t("profile.sections.overview.noHistory") : undefined}>
-        {firstTx && <StatCell label={t("profile.sections.overview.firstTx")} value={firstTx} />}
-        <StatCell
-          label={t("profile.sections.overview.age")}
-          value={t("profile.summary.walletAgeDays", { count: Math.round(stats.walletAgeDays) })}
-        />
-        <StatCell label={t("profile.sections.overview.totalTx")} value={formatNumber(stats.totalTxCount, lang)} />
-        <StatCell
-          label={t("profile.sections.overview.successfulTx")}
-          value={formatNumber(stats.successfulTxCount, lang)}
-        />
-        <StatCell label={t("profile.sections.overview.fees")} value={`${formatTon(stats.feesPaidNanoTon, lang)} TON`} />
-        <StatCell
-          label={t("profile.sections.overview.counterparties")}
-          value={formatNumber(stats.uniqueCounterpartyCount, lang)}
-        />
-        <StatCell
-          label={t("profile.sections.overview.dataConfidence")}
-          value={`${stats.dataConfidence.overallScore}%`}
-        />
-      </Section>
-
-      <Section header={t("profile.sections.activity.title")}>
-        <StatCell label={t("profile.sections.activity.activeDays")} value={formatNumber(stats.activeDaysCount, lang)} />
-        <StatCell
-          label={t("profile.sections.activity.activeMonths")}
-          value={formatNumber(stats.activeMonthsCount, lang)}
-        />
-        <StatCell
-          label={t("profile.sections.activity.consistency")}
-          value={Math.round(factorValue(score, "C"))}
-        />
-      </Section>
-
-      <ComingSoonCell
-        title={t("profile.sections.comingSoon.defi.title")}
-        body={t("profile.sections.comingSoon.defi.body")}
-        badge={t("profile.sections.comingSoon.badge")}
-      />
-
-      <Section
-        header={t("profile.sections.jettons.title")}
-        footer={!stats.dataConfidence.jettonDataAvailable ? t("profile.sections.jettons.partialData") : undefined}
-      >
-        <StatCell label={t("profile.sections.jettons.transfers")} value={formatNumber(stats.jettonTransferCount, lang)} />
-        <StatCell label={t("profile.sections.jettons.burns")} value={formatNumber(stats.jettonBurnCount, lang)} />
-        <StatCell
-          label={t("profile.sections.jettons.masters")}
-          value={formatNumber(stats.uniqueJettonMasterCount, lang)}
-        />
-      </Section>
-
-      <ComingSoonCell
-        title={t("profile.sections.comingSoon.nfts.title")}
-        body={t("profile.sections.comingSoon.nfts.body")}
-        badge={t("profile.sections.comingSoon.badge")}
-      />
-      <ComingSoonCell
-        title={t("profile.sections.comingSoon.telegramAssets.title")}
-        body={t("profile.sections.comingSoon.telegramAssets.body")}
-        badge={t("profile.sections.comingSoon.badge")}
-      />
-      <ComingSoonCell
-        title={t("profile.sections.comingSoon.staking.title")}
-        body={t("profile.sections.comingSoon.staking.body")}
-        badge={t("profile.sections.comingSoon.badge")}
-      />
-
-      <Section header={t("profile.sections.builder.title")}>
-        <StatCell label={t("profile.sections.builder.deployments")} value={formatNumber(stats.deploymentCount, lang)} />
-        <StatCell label={t("profile.sections.builder.score")} value={Math.round(factorValue(score, "B"))} />
-      </Section>
-
-      <ComingSoonCell
-        title={t("profile.sections.comingSoon.history.title")}
-        body={t("profile.sections.comingSoon.history.body")}
-        badge={t("profile.sections.comingSoon.badge")}
-      />
-      <ComingSoonCell
-        title={t("profile.sections.comingSoon.rareRelics.title")}
-        body={t("profile.sections.comingSoon.rareRelics.body")}
-        badge={t("profile.sections.comingSoon.badge")}
-      />
-
-      {passportsList && (
-        <EligiblePassportsBlock categories={passportsList} t={t} navigate={navigate} />
-      )}
-
-      <Section header={t("profile.actions.title")}>
-        <Cell
-          after={
-            <Button
-              size="s"
-              onClick={() => {
-                hapticSelection();
-                navigate("/mint");
-              }}
-            >
-              {t("profile.actions.go")}
-            </Button>
-          }
-          subtitle={mainCategory?.existsOnChain ? t("profile.sections.passports.minted", { revision: mainCategory.revision }) : undefined}
-        >
-          {t("profile.actions.mint")}
-        </Cell>
-        <Cell
-          multiline
-          subtitle={t("profile.actions.refreshHint")}
-          after={<Badge type="number">{t("profile.actions.refreshPrice")}</Badge>}
-        >
-          {t("profile.actions.refresh")}
-        </Cell>
-        <Cell subtitle={t("profile.actions.viewRelicsHint")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
-          {t("profile.actions.viewRelics")}
-        </Cell>
-        <Cell subtitle={t("profile.actions.shareHint")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
-          {t("profile.actions.share")}
-        </Cell>
-        <Cell subtitle={t("profile.actions.compareHint")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
-          {t("profile.actions.compare")}
-        </Cell>
-      </Section>
-
       <Section
         header={
           <span className="referral-section-header">
             <span>{t("referral.title")}</span>
-            <IconButton
-              size="s"
-              mode="plain"
-              className="referral-info-button"
-              onClick={() => {
-                hapticSelection();
-                setReferralInfoOpen(true);
-              }}
-              aria-label={t("referral.info.open")}
-            >
-              <Info size={20} strokeWidth={2} />
-            </IconButton>
+            {isConnected && (
+              <IconButton
+                size="s"
+                mode="plain"
+                className="referral-info-button"
+                onClick={() => {
+                  hapticSelection();
+                  setReferralInfoOpen(true);
+                }}
+                aria-label={t("referral.info.open")}
+              >
+                <Info size={20} strokeWidth={2} />
+              </IconButton>
+            )}
           </span>
         }
-        footer={t("referral.footer")}
+        footer={isConnected ? t("referral.footer") : undefined}
       >
-        <Cell
-          multiline
-          subtitle={<span className="mono referral-link">{referralLink}</span>}
-          after={
-            <div className="referral-actions">
-              <Button
-                size="s"
-                mode="outline"
-                disabled={!referralCode}
-                onClick={handleCopyReferral}
-              >
-                {t("referral.copy")}
-              </Button>
-              <Button
-                size="s"
-                disabled={!referralCode}
-                onClick={handleShareReferral}
-              >
-                {t("referral.shareInline")}
-              </Button>
-            </div>
-          }
-        >
-          {referralCode ? t("referral.ready") : t("referral.connectToGet")}
-        </Cell>
-        {referralStats && (
-          <div className="referral-stats-grid">
-            <div>
-              <strong>{formatNumber(referralStats.invited, lang)}</strong>
-              <span>{t("referral.stats.invited")}</span>
-            </div>
-            <div>
-              <strong>{formatNumber(referralStats.walletConnected, lang)}</strong>
-              <span>{t("referral.stats.walletConnected")}</span>
-            </div>
-            <div>
-              <strong>{formatNumber(referralStats.scanned, lang)}</strong>
-              <span>{t("referral.stats.scanned")}</span>
-            </div>
-          </div>
+        {!isConnected ? (
+          <Cell multiline>{t("referral.connectToGet")}</Cell>
+        ) : (
+          <>
+            <Cell
+              multiline
+              subtitle={<span className="mono referral-link">{referralLink}</span>}
+              after={
+                <div className="referral-actions">
+                  <Button size="s" mode="outline" disabled={!referralCode} onClick={onCopy}>
+                    {t("referral.copy")}
+                  </Button>
+                  <Button size="s" disabled={!referralCode} onClick={onShare}>
+                    {t("referral.shareInline")}
+                  </Button>
+                </div>
+              }
+            >
+              {referralCode ? t("referral.ready") : t("referral.connectToGet")}
+            </Cell>
+            {referralStats && (
+              <div className="referral-stats-grid">
+                <div>
+                  <strong>{formatNumber(referralStats.invited, lang)}</strong>
+                  <span>{t("referral.stats.invited")}</span>
+                </div>
+                <div>
+                  <strong>{formatNumber(referralStats.walletConnected, lang)}</strong>
+                  <span>{t("referral.stats.walletConnected")}</span>
+                </div>
+                <div>
+                  <strong>{formatNumber(referralStats.scanned, lang)}</strong>
+                  <span>{t("referral.stats.scanned")}</span>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </Section>
 
@@ -582,10 +442,10 @@ function ProfileResult({
             </div>
             <p className="referral-modal-note">{t("referral.info.reputationNote")}</p>
             <div className="referral-modal-actions">
-              <Button mode="outline" size="s" stretched disabled={!referralCode} onClick={handleCopyReferral}>
+              <Button mode="outline" size="s" stretched disabled={!referralCode} onClick={onCopy}>
                 {t("referral.copy")}
               </Button>
-              <Button size="s" stretched disabled={!referralCode} onClick={handleShareReferral}>
+              <Button size="s" stretched disabled={!referralCode} onClick={onShare}>
                 {t("referral.shareInline")}
               </Button>
             </div>
@@ -603,6 +463,130 @@ function ProfileResult({
           </div>
         </div>
       )}
+    </>
+  );
+}
+
+function ProfileResult({
+  data,
+  passports,
+  lang,
+  t,
+  navigate,
+}: {
+  data: WalletProfileResponse;
+  passports: ReturnType<typeof useWalletPassports>;
+  lang: string;
+  t: ReturnType<typeof useTranslation>["t"];
+  navigate: (path: string) => void;
+}) {
+  const { score, stats } = data;
+  const topFactors = score.dominantFactors ?? [...score.factors].sort((a, b) => b.value - a.value).slice(0, 3);
+  const firstTx = formatDate(stats.firstTxAt, lang);
+  const passportsList = passports.state.status === "ready" ? passports.state.data.categories : null;
+  const mainCategory = passportsList?.find((c) => c.category === "passport");
+
+  return (
+    <>
+      <ProfileResultBlock data={data} topFactors={topFactors} lang={lang} t={t} />
+
+      <Section header={t("profile.sections.overview.title")} footer={stats.totalTxCount === 0 ? t("profile.sections.overview.noHistory") : undefined}>
+        {firstTx && <StatCell label={t("profile.sections.overview.firstTx")} value={firstTx} />}
+        <StatCell
+          label={t("profile.sections.overview.age")}
+          value={t("profile.summary.walletAgeDays", { count: Math.round(stats.walletAgeDays) })}
+        />
+        <StatCell label={t("profile.sections.overview.totalTx")} value={formatNumber(stats.totalTxCount, lang)} />
+        <StatCell
+          label={t("profile.sections.overview.successfulTx")}
+          value={formatNumber(stats.successfulTxCount, lang)}
+        />
+        <StatCell label={t("profile.sections.overview.fees")} value={`${formatTon(stats.feesPaidNanoTon, lang)} TON`} />
+        <StatCell
+          label={t("profile.sections.overview.counterparties")}
+          value={formatNumber(stats.uniqueCounterpartyCount, lang)}
+        />
+      </Section>
+
+      <Section header={t("profile.sections.activity.title")}>
+        <StatCell label={t("profile.sections.activity.activeDays")} value={formatNumber(stats.activeDaysCount, lang)} />
+        <StatCell
+          label={t("profile.sections.activity.activeMonths")}
+          value={formatNumber(stats.activeMonthsCount, lang)}
+        />
+        <StatCell
+          label={t("profile.sections.activity.consistency")}
+          value={Math.round(factorValue(score, "C"))}
+        />
+      </Section>
+
+      <Section
+        header={t("profile.sections.jettons.title")}
+        footer={!stats.dataConfidence.jettonDataAvailable ? t("profile.sections.jettons.partialData") : undefined}
+      >
+        <StatCell label={t("profile.sections.jettons.transfers")} value={formatNumber(stats.jettonTransferCount, lang)} />
+        <StatCell label={t("profile.sections.jettons.burns")} value={formatNumber(stats.jettonBurnCount, lang)} />
+        <StatCell
+          label={t("profile.sections.jettons.masters")}
+          value={formatNumber(stats.uniqueJettonMasterCount, lang)}
+        />
+      </Section>
+
+      <Section header={t("profile.sections.builder.title")}>
+        <StatCell label={t("profile.sections.builder.deployments")} value={formatNumber(stats.deploymentCount, lang)} />
+        <StatCell label={t("profile.sections.builder.score")} value={Math.round(factorValue(score, "B"))} />
+      </Section>
+
+      <Section header={t("profile.sections.comingSoon.badge")}>
+        <Cell subtitle={t("profile.sections.comingSoon.defi.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
+          {t("profile.sections.comingSoon.defi.title")}
+        </Cell>
+        <Cell subtitle={t("profile.sections.comingSoon.nfts.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
+          {t("profile.sections.comingSoon.nfts.title")}
+        </Cell>
+        <Cell subtitle={t("profile.sections.comingSoon.telegramAssets.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
+          {t("profile.sections.comingSoon.telegramAssets.title")}
+        </Cell>
+        <Cell subtitle={t("profile.sections.comingSoon.staking.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
+          {t("profile.sections.comingSoon.staking.title")}
+        </Cell>
+        <Cell subtitle={t("profile.sections.comingSoon.history.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
+          {t("profile.sections.comingSoon.history.title")}
+        </Cell>
+        <Cell subtitle={t("profile.sections.comingSoon.rareRelics.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
+          {t("profile.sections.comingSoon.rareRelics.title")}
+        </Cell>
+      </Section>
+
+      {passportsList && (
+        <EligiblePassportsBlock categories={passportsList} t={t} navigate={navigate} />
+      )}
+
+      <Section header={t("profile.actions.title")}>
+        <Cell
+          after={
+            <Button
+              size="s"
+              onClick={() => {
+                hapticSelection();
+                navigate("/mint");
+              }}
+            >
+              {t("profile.actions.go")}
+            </Button>
+          }
+          subtitle={mainCategory?.existsOnChain ? t("profile.sections.passports.minted", { revision: mainCategory.revision }) : undefined}
+        >
+          {t("profile.actions.mint")}
+        </Cell>
+        <Cell
+          multiline
+          subtitle={t("profile.actions.refreshHint")}
+          after={<Badge type="number">{t("profile.actions.refreshPrice")}</Badge>}
+        >
+          {t("profile.actions.refresh")}
+        </Cell>
+      </Section>
     </>
   );
 }

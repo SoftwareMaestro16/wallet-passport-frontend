@@ -2,22 +2,19 @@
   "connect": {
     "title": "Wallet Passport",
     "valueProp": "Прозрачный TON-паспорт вашего кошелька: возраст, активность и репутация — на основе истории в сети, без ручного ввода.",
+    "freeScan": "Сканирование бесплатно.",
     "connectButton": "Подключить кошелёк",
     "testnetBadge": "Тестовая сеть (testnet)",
     "testnetTitle": "MVP работает только в тестовой сети",
     "testnetHint": "Mainnet не используется до отдельного решения.",
     "scanButton": "Сканировать кошелёк",
     "updateButton": "Обновить паспорт",
-    "paidScan": {
-      "price": "100 Stars",
-      "prepared": "Paid scan подготовлен: в MVP кнопка запускает скан без реальной оплаты."
-    },
     "menu": {
       "title": "Главное меню",
       "scan": {
         "title": "Scan Wallet",
-        "price": "100 Stars",
-        "body": "Запускает сбор истории и расчёт Wallet Score. Оплата будет подключена позже."
+        "badge": "Бесплатно",
+        "body": "Запускает сбор истории и расчёт Wallet Score."
       },
       "reveal": {
         "title": "Profile / Reveal",
@@ -28,11 +25,6 @@
         "title": "Mint SBT",
         "badge": "Testnet",
         "body": "Отправляет TonConnect-транзакцию с backend-signed permit без изменения payload."
-      },
-      "referral": {
-        "title": "Referral",
-        "badge": "t.me link",
-        "body": "Личная ссылка ведёт сразу в сценарий scan через startapp=ref_{code}."
       }
     }
   },
@@ -292,9 +284,9 @@
     "copied": "Скопировано"
   },
   "referral": {
-    "title": "Referral",
+    "title": "Рефералы",
     "ready": "Ваша referral-ссылка",
-    "connectToGet": "Подключите кошелёк, чтобы получить referral code",
+    "connectToGet": "Подключите кошелёк, чтобы получить реферальную ссылку",
     "copy": "Копировать",
     "shareInline": "Поделиться",
     "info": {

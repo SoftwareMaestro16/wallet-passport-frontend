@@ -2,22 +2,19 @@
   "connect": {
     "title": "Wallet Passport",
     "valueProp": "A transparent TON passport for your wallet: age, activity and reputation — built from on-chain history, no manual input.",
+    "freeScan": "Scanning is free.",
     "connectButton": "Connect Wallet",
     "testnetBadge": "Testnet",
     "testnetTitle": "MVP runs on testnet only",
     "testnetHint": "Mainnet is not used until explicitly enabled.",
     "scanButton": "Scan Wallet",
     "updateButton": "Update Passport",
-    "paidScan": {
-      "price": "100 Stars",
-      "prepared": "Paid scan is prepared: in the MVP this starts a scan without real payment."
-    },
     "menu": {
       "title": "Main menu",
       "scan": {
         "title": "Scan Wallet",
-        "price": "100 Stars",
-        "body": "Starts history collection and Wallet Score calculation. Payment will be wired later."
+        "badge": "Free",
+        "body": "Starts history collection and Wallet Score calculation."
       },
       "reveal": {
         "title": "Profile / Reveal",
@@ -28,11 +25,6 @@
         "title": "Mint SBT",
         "badge": "Testnet",
         "body": "Sends a TonConnect transaction with the backend-signed permit unchanged."
-      },
-      "referral": {
-        "title": "Referral",
-        "badge": "t.me link",
-        "body": "Your personal link opens the scan flow through startapp=ref_{code}."
       }
     }
   },
@@ -286,9 +278,9 @@
     "copied": "Copied"
   },
   "referral": {
-    "title": "Referral",
+    "title": "Referrals",
     "ready": "Your referral link",
-    "connectToGet": "Connect your wallet to receive a referral code",
+    "connectToGet": "Connect your wallet to receive a referral link",
     "copy": "Copy",
     "shareInline": "Share",
     "info": {
