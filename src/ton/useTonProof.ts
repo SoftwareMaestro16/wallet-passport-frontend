@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import type { TonProofItemReplySuccess } from "@tonconnect/ui-react";
-import { api, type TonProofVerifyResponse } from "../api/client";
+import { api, type TonProofVerifyResponse, ApiError } from "../api/client";
 import { getTelegramInitData, waitForTelegramInitData } from "../app/telegram";
 import { saveReferralCode } from "../shared/referral";
+import { pushDebug } from "../shared/debug";
 
 /**
  * `useTonProof`/`useVerifiedProfile` are called independently from both `ConnectScreen` and
@@ -35,33 +36,27 @@ let verifyPromiseCache: { payload: string; promise: Promise<TonProofVerifyRespon
 export function useTonProof() {
   const [tonConnectUI] = useTonConnectUI();
   const wallet = useTonWallet();
-  const payloadRef = useRef<string | null>(null);
-  const [payloadError, setPayloadError] = useState(false);
+  const [payloadError, setPayloadError] = useState<string | null>(null);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
 
   const refreshPayload = useCallback(async () => {
     try {
-      setPayloadError(false);
+      setPayloadError(null);
       tonConnectUI.setConnectRequestParameters({ state: "loading" });
-      // verifyTonProof requires an existing session cookie (server/src/http/routes/auth.ts) that
-      // only this call issues — must happen before the wallet ever reaches verify(), so it's
-      // bundled into the same mount-time effect that fetches the proof payload rather than a
-      // separate step that could race with connecting. `waitForTelegramInitData` matters here:
-      // on at least one real client `initData` reads empty for a beat right at mount (see its
-      // doc comment) — this ran at mount before, so it hit that empty window every time.
       const initData = await waitForTelegramInitData();
-      if (!initData) throw new Error("Telegram initData unavailable");
+      if (!initData) throw new Error("Telegram initData unavailable (waitForTelegramInitData timed out)");
+      pushDebug(`initData length=${initData.length}`);
       const auth = await api.telegramAuth(initData);
+      pushDebug(`telegramAuth OK user=${auth.user.id}`);
       saveReferralCode(auth.user.referralCode);
       const { payload } = await api.getTonProofPayload(initData);
-      payloadRef.current = payload;
+      pushDebug(`ton_proof payload received (${payload.length} chars)`);
       tonConnectUI.setConnectRequestParameters({ state: "ready", value: { tonProof: payload } });
-    } catch {
-      // Backend unreachable (wrong VITE_API_BASE_URL, server down, etc.) — clear the loading
-      // state so the wallet can still connect without a proof, but surface this loudly instead
-      // of silently degrading: a wallet connected without a proof can never pass verification,
-      // so the "Generate" button would otherwise just never appear with zero explanation.
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      pushDebug(`refreshPayload FAILED: ${message}`);
       tonConnectUI.setConnectRequestParameters(null);
-      setPayloadError(true);
+      setPayloadError(message);
     }
   }, [tonConnectUI]);
 
@@ -73,7 +68,10 @@ export function useTonProof() {
 
   const verify = useCallback(async () => {
     if (!wallet || !tonProofResult || !("proof" in tonProofResult)) {
-      throw new Error("No ton_proof available on the current wallet connection");
+      const msg = "No ton_proof on current wallet connection";
+      setVerifyError(msg);
+      pushDebug(`verify skipped: ${msg}`);
+      throw new Error(msg);
     }
 
     const payload = tonProofResult.proof.payload;
@@ -81,6 +79,7 @@ export function useTonProof() {
       return verifyPromiseCache.promise;
     }
 
+    pushDebug(`verify() sending: addr=${wallet.account.address.slice(0, 10)}... chain=${wallet.account.chain}`);
     const promise = api.verifyTonProof(
       {
         address: wallet.account.address,
@@ -97,12 +96,21 @@ export function useTonProof() {
       getTelegramInitData(),
     );
     verifyPromiseCache = { payload, promise };
-    // A failed verification must not permanently poison this payload — clear the cache so a
-    // deliberate retry (which re-fetches a brand new payload anyway) isn't blocked by a stale
-    // rejected promise if the same payload string were ever reused.
-    promise.catch(() => {
-      if (verifyPromiseCache?.payload === payload) verifyPromiseCache = null;
-    });
+    promise
+      .then(() => {
+        setVerifyError(null);
+        pushDebug("verify OK");
+      })
+      .catch((err) => {
+        const message = err instanceof ApiError
+          ? `verify HTTP ${err.status}: ${JSON.stringify(err.body).slice(0, 200)}`
+          : err instanceof Error
+            ? `verify FAILED: ${err.message}`
+            : `verify FAILED: ${String(err)}`;
+        pushDebug(message);
+        setVerifyError(message);
+        if (verifyPromiseCache?.payload === payload) verifyPromiseCache = null;
+      });
     return promise;
   }, [wallet, tonProofResult]);
 
@@ -111,5 +119,6 @@ export function useTonProof() {
     verify,
     hasProof: Boolean(tonProofResult && "proof" in tonProofResult),
     payloadError,
+    verifyError,
   };
 }
