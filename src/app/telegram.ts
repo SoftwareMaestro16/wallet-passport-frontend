@@ -52,47 +52,32 @@ function applyThemeVars(): void {
 /** Telegram's `language_code` for the current user, e.g. "ru", "en", "uk". */
 export function getTelegramLanguageCode(): string | undefined {
   try {
-    return WebApp.initDataUnsafe?.user?.language_code;
+    // Same @twa-dev/sdk initData bug as getTelegramInitData below — read the raw global directly.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.language_code;
   } catch {
     return undefined;
   }
 }
 
-/** Raw initData string — sent to the backend for Telegram auth validation. Never parsed/trusted client-side. */
+/**
+ * Raw initData string — sent to the backend for Telegram auth validation. Never parsed/trusted
+ * client-side.
+ *
+ * Deliberately reads `window.Telegram.WebApp.initData` directly instead of `@twa-dev/sdk`'s
+ * imported `WebApp` singleton. Confirmed via production diagnostics (2026-08-25): on Telegram
+ * Desktop, with the exact same `location.hash` present and non-empty in both cases,
+ * `window.Telegram.WebApp.initData` correctly returned the real value while `@twa-dev/sdk`
+ * (v8.0.2) `WebApp.initData` returned an empty string every time — a bug/stale-reference
+ * somewhere in that package's own hash parsing, not a timing race (waiting longer never helped)
+ * and not our router (same result before and after switching off HashRouter). `@twa-dev/sdk`'s
+ * `WebApp` remains in use for everything else (ready/expand/theme/onEvent), which all work
+ * correctly — this bypass is scoped to `initData`/`initDataUnsafe` specifically.
+ */
 export function getTelegramInitData(): string {
   try {
-    const value = WebApp.initData ?? "";
-    // TEMPORARY diagnostic — server sees this consistently empty in production despite
-    // window.Telegram.WebApp.initData showing real data when checked manually; need to see
-    // location.hash/sessionStorage/window.Telegram directly vs the @twa-dev/sdk WebApp import at
-    // the exact moment this fires. Remove once root-caused.
-    console.warn("[wp-diag] getTelegramInitData", {
-      sdkValue: value,
-      sdkLen: value.length,
-      locationHash: (() => {
-        try {
-          return location.hash;
-        } catch {
-          return "<error>";
-        }
-      })(),
-      sessionStorageInitParams: (() => {
-        try {
-          return sessionStorage.getItem("initParams");
-        } catch {
-          return "<error>";
-        }
-      })(),
-      windowTelegramWebAppInitData: (() => {
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return (window as any).Telegram?.WebApp?.initData;
-        } catch {
-          return "<error>";
-        }
-      })(),
-    });
-    return value;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (window as any).Telegram?.WebApp?.initData ?? "";
   } catch {
     return "";
   }
