@@ -250,6 +250,23 @@ export function hapticNotification(type: HapticNotificationType): void {
 }
 
 /**
+ * Shows Telegram's native "close app?" prompt if the user tries to swipe away/close the Mini
+ * App. Used while a scan is in flight so an accidental close doesn't leave the user unsure
+ * whether their scan is still running — the scan itself is server-side and keeps going
+ * regardless (see scanRunner.ts), but reopening later and landing back on this same in-progress
+ * screen only works if the user knows to come back rather than assuming it was lost.
+ */
+export function setClosingConfirmation(enabled: boolean): void {
+  const app = rawWebApp();
+  try {
+    if (enabled) app?.enableClosingConfirmation?.();
+    else app?.disableClosingConfirmation?.();
+  } catch {
+    // No-op outside Telegram (e.g. browser dev preview) — nothing to confirm there.
+  }
+}
+
+/**
  * Raw initData string — sent to the backend for Telegram auth validation. Never parsed/trusted
  * client-side.
  *

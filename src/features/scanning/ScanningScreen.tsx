@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Section, Cell, Spinner, Progress, Caption, Button } from "@telegram-apps/telegram-ui";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
-import { hapticImpact, hapticNotification, hapticSelection } from "../../app/telegram";
+import { hapticImpact, hapticNotification, hapticSelection, setClosingConfirmation } from "../../app/telegram";
 import { ScanIcon } from "../../shared/icons";
 import { useScanProgress, SCAN_STEP_COUNT } from "./useScanProgress";
 
@@ -41,6 +41,12 @@ export function ScanningScreen() {
     didFinishHaptic.current = true;
     hapticNotification("error");
   }, [progress.failed]);
+
+  useEffect(() => {
+    const stillRunning = !progress.done && !progress.failed;
+    setClosingConfirmation(stillRunning);
+    return () => setClosingConfirmation(false);
+  }, [progress.done, progress.failed]);
 
   if (!isConnected) return null;
 
