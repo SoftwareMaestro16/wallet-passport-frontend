@@ -33,7 +33,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     // still won't attach/store the cookie without this on every request.
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
+      // Fastify's default JSON parser rejects an empty body when this header is present
+      // (FST_ERR_CTP_EMPTY_JSON_BODY) — only send it when there's an actual body to parse.
+      ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
       ...(initData ? { "X-Telegram-Init-Data": initData } : {}),
       ...headers,
     },
