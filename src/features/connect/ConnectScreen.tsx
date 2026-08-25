@@ -2,7 +2,6 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { TonConnectButton } from "@tonconnect/ui-react";
 import { Section, Cell, Button, Badge, Spinner } from "@telegram-apps/telegram-ui";
-import { ScoreBar } from "../../shared/ScoreBar";
 import { TestnetGuard } from "../../shared/TestnetGuard";
 import { buildReferralLink, getSavedReferralCode } from "../../shared/referral";
 import { hapticImpact, hapticSelection } from "../../app/telegram";
@@ -56,17 +55,17 @@ export function ConnectScreen() {
           </div>
           <div className="menu-card">
             <div className="menu-card-title">
-              <span>{t("connect.menu.reveal.title")}</span>
-              <Badge type="number">{t("connect.menu.reveal.badge")}</Badge>
-            </div>
-            <p>{t("connect.menu.reveal.body")}</p>
-          </div>
-          <div className="menu-card">
-            <div className="menu-card-title">
               <span>{t("connect.menu.mint.title")}</span>
               <Badge type="number">{t("connect.menu.mint.badge")}</Badge>
             </div>
             <p>{t("connect.menu.mint.body")}</p>
+          </div>
+          <div className="menu-card">
+            <div className="menu-card-title">
+              <span>{t("connect.menu.reveal.title")}</span>
+              <Badge type="number">{t("connect.menu.reveal.badge")}</Badge>
+            </div>
+            <p>{t("connect.menu.reveal.body")}</p>
           </div>
           <div className="menu-card">
             <div className="menu-card-title">
@@ -171,15 +170,6 @@ export function ConnectScreen() {
           }
         >
           {referralCode ? t("referral.ready") : t("referral.connectToGet")}
-        </Cell>
-      </Section>
-
-      <Section header={t("connect.sampleCardTitle")}>
-        <div className="sample-card-body">
-          <ScoreBar score={7} label={t("connect.sampleScoreLabel")} />
-        </div>
-        <Cell subtitle={t("connect.sampleScoreLabel")}>
-          <span className="mono">EQ...sample...wallet</span>
         </Cell>
       </Section>
     </div>

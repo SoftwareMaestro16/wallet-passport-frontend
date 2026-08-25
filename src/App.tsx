@@ -2,13 +2,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppRoot, Button, Tabbar } from "@telegram-apps/telegram-ui";
+import { Copy, Gem, ScanLine, UserRound, Wallet } from "lucide-react";
 import { TonConnectProvider } from "./ton/TonConnectProvider";
-import { WalletIcon, ProfileIcon, MintIcon, CopyIcon } from "./shared/icons";
 import { ConnectScreen } from "./features/connect/ConnectScreen";
 import { ScanningScreen } from "./features/scanning/ScanningScreen";
 import { ProfileScreen } from "./features/profile/ProfileScreen";
 import { MintScreen } from "./features/mint/MintScreen";
-import { hapticImpact, isTelegramMiniApp, useTelegramAppearance, useTelegramMainButton } from "./app/telegram";
+import {
+  hapticImpact,
+  isTelegramMiniApp,
+  syncTelegramChrome,
+  useTelegramAppearance,
+  useTelegramMainButton,
+} from "./app/telegram";
 import { useTonConnectAccount } from "./ton/useTonConnectAccount";
 import { useVerifiedProfile } from "./ton/useVerifiedProfile";
 import { useTonBalance } from "./ton/useTonBalance";
@@ -22,9 +28,9 @@ function Nav() {
   const navigate = useNavigate();
 
   const items = [
-    { to: "/", label: t("nav.scan"), icon: WalletIcon },
-    { to: "/profile", label: t("nav.profile"), icon: ProfileIcon },
-    { to: "/mint", label: t("nav.mint"), icon: MintIcon },
+    { to: "/", label: t("nav.scan"), icon: ScanLine },
+    { to: "/mint", label: t("nav.mint"), icon: Gem },
+    { to: "/profile", label: t("nav.profile"), icon: UserRound },
   ];
 
   return (
@@ -195,7 +201,7 @@ function AppShell() {
             title={isConnected ? t("wallet.open") : t("connect.connectButton")}
           >
             <span className="app-tonconnect-icon" aria-hidden="true">
-              <WalletIcon size={19} />
+              <Wallet size={19} strokeWidth={2.1} />
             </span>
             <span className="app-tonconnect-label">
               {isConnected ? shortHeaderAddress(address) : t("wallet.connectShort")}
@@ -215,7 +221,7 @@ function AppShell() {
               <div className="wallet-sheet-handle" aria-hidden="true" />
               <div className="wallet-sheet-head">
                 <span className="wallet-sheet-icon" aria-hidden="true">
-                  <WalletIcon size={21} />
+                  <Wallet size={21} strokeWidth={2.1} />
                 </span>
                 <div className="wallet-sheet-title">
                   <strong>{t("wallet.sheetTitle")}</strong>
@@ -240,7 +246,7 @@ function AppShell() {
                   aria-label={copied ? t("wallet.copied") : t("wallet.copy")}
                   title={copied ? t("wallet.copied") : t("wallet.copy")}
                 >
-                  <CopyIcon size={20} />
+                  <Copy size={20} strokeWidth={2.1} />
                 </button>
                 <button type="button" className="wallet-disconnect-button" onClick={handleWalletDisconnect}>
                   {t("profile.disconnect")}
@@ -269,7 +275,8 @@ function AppShell() {
 export default function App() {
   const { platform, appearance } = useTelegramAppearance();
   const isTelegram = isTelegramMiniApp();
-  const [theme, setTheme] = useState<AppTheme>(() => readStoredTheme(appearance));
+  const allowBrowserPreview = import.meta.env.DEV;
+  const [theme, setTheme] = useState<AppTheme>(() => readStoredTheme(!isTelegram && allowBrowserPreview ? "dark" : appearance));
 
   useEffect(() => {
     const handleThemeChange = () => setTheme(readStoredTheme(appearance));
@@ -281,6 +288,10 @@ export default function App() {
     };
   }, [appearance]);
 
+  useEffect(() => {
+    syncTelegramChrome(theme);
+  }, [theme]);
+
   return (
     <AppRoot
       platform={platform}
@@ -289,7 +300,7 @@ export default function App() {
       data-wp-theme={theme}
       className="app-root"
     >
-      {!isTelegram ? (
+      {!isTelegram && !allowBrowserPreview ? (
         <TelegramOnlyGate />
       ) : (
         <TonConnectProvider>

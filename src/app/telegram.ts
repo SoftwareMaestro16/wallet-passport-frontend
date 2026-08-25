@@ -91,6 +91,25 @@ function applyThemeVars(): void {
   document.body.style.color = "var(--tg-theme-text-color, #111111)";
 }
 
+export function syncTelegramChrome(theme: "light" | "dark"): void {
+  const app = rawWebApp();
+  const headerColor = theme === "dark" ? "#172432" : "#ffffff";
+  const backgroundColor = theme === "dark" ? "#111b25" : "#ffffff";
+
+  document.documentElement.style.setProperty("--wp-header-color", headerColor);
+  document.documentElement.style.setProperty("--wp-bg-color", backgroundColor);
+  document.body.style.backgroundColor = backgroundColor;
+
+  try {
+    if (app?.isVersionAtLeast?.("6.1")) {
+      app.setHeaderColor?.(headerColor);
+      app.setBackgroundColor?.(backgroundColor);
+    }
+  } catch {
+    // no-op outside Telegram or on clients that do not support chrome color updates
+  }
+}
+
 /** Telegram's `language_code` for the current user, e.g. "ru", "en", "uk". */
 export function getTelegramLanguageCode(): string | undefined {
   try {

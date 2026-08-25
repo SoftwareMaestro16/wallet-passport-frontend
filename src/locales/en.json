@@ -3,8 +3,6 @@
     "title": "Wallet Passport",
     "valueProp": "A transparent TON passport for your wallet: age, activity and reputation — built from on-chain history, no manual input.",
     "connectButton": "Connect Wallet",
-    "sampleCardTitle": "Sample card",
-    "sampleScoreLabel": "TON Score",
     "testnetBadge": "Testnet",
     "testnetTitle": "MVP runs on testnet only",
     "testnetHint": "Mainnet is not used until explicitly enabled.",

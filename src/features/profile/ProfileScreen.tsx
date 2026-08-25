@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Section, Cell, Avatar, Spinner, Button, Badge, Switch, IconButton } from "@telegram-apps/telegram-ui";
+import { Info } from "lucide-react";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
 import { ScoreBar } from "../../shared/ScoreBar";
@@ -123,16 +124,6 @@ function applyProfileTheme(theme: ProfileTheme): void {
   appRoot?.setAttribute("data-wp-theme", theme);
   appRoot?.setAttribute("data-scheme", theme);
   window.dispatchEvent(new Event("wallet-passport-theme-change"));
-}
-
-function InfoIcon({ size = 20 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M12 10.8v5.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="12" cy="7.8" r="1.1" fill="currentColor" />
-    </svg>
-  );
 }
 
 export function ProfileScreen() {
@@ -357,7 +348,7 @@ function ProfileResult({
       <ProfileResultBlock data={data} topFactors={topFactors} lang={lang} t={t} />
 
       <Section header={t("profile.summary.title")}>
-        <div className="sample-card-body">
+        <div className="summary-score-body">
           <ScoreBar score={score.tonScore} max={1000} label={`${t("profile.summary.title")} — ${score.tier}`} />
         </div>
         <StatCell
@@ -512,7 +503,7 @@ function ProfileResult({
               }}
               aria-label={t("referral.info.open")}
             >
-              <InfoIcon />
+              <Info size={20} strokeWidth={2} />
             </IconButton>
           </span>
         }
@@ -571,7 +562,7 @@ function ProfileResult({
             onClick={(event) => event.stopPropagation()}
           >
             <div className="referral-modal-icon">
-              <InfoIcon size={28} />
+              <Info size={28} strokeWidth={2} />
             </div>
             <h2 id="referral-info-title">{t("referral.info.title")}</h2>
             <p>{t("referral.info.body")}</p>

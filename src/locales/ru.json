@@ -3,8 +3,6 @@
     "title": "Wallet Passport",
     "valueProp": "Прозрачный TON-паспорт вашего кошелька: возраст, активность и репутация — на основе истории в сети, без ручного ввода.",
     "connectButton": "Подключить кошелёк",
-    "sampleCardTitle": "Пример карточки",
-    "sampleScoreLabel": "TON Score",
     "testnetBadge": "Тестовая сеть (testnet)",
     "testnetTitle": "MVP работает только в тестовой сети",
     "testnetHint": "Mainnet не используется до отдельного решения.",
