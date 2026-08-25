@@ -1,4 +1,4 @@
-import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppRoot, Tabbar } from "@telegram-apps/telegram-ui";
 import { TonConnectProvider } from "./ton/TonConnectProvider";
@@ -66,9 +66,19 @@ export default function App() {
   return (
     <AppRoot platform={platform} appearance={appearance} data-scheme={appearance} className="app-root">
       <TonConnectProvider>
-        <HashRouter>
+        {/*
+          Telegram Desktop delivers launch params (initData, platform, theme) as a URL hash
+          fragment (`#tgWebAppData=...&tgWebAppPlatform=tdesktop&...`) -- @twa-dev/sdk reads this
+          exactly once, synchronously, at module-evaluation time, and never re-reads it. A
+          HashRouter here fights over the same `location.hash` for its own routing and can mangle
+          it before/after that one read, which is exactly what caused every request to see a
+          permanently empty initData in production regardless of retries. This app never needs
+          shareable/bookmarkable sub-URLs, so MemoryRouter (no window.location interaction at all)
+          removes the conflict entirely rather than trying to sequence around it.
+        */}
+        <MemoryRouter>
           <AppShell />
-        </HashRouter>
+        </MemoryRouter>
       </TonConnectProvider>
     </AppRoot>
   );
