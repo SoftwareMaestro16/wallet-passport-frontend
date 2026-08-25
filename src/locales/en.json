@@ -66,6 +66,29 @@
     "retry": "Retry",
     "scoreLabel": "TON Score",
     "walletLabel": "Wallet",
+    "factors": {
+      "A": "Age",
+      "C": "Rhythm",
+      "E": "Volume",
+      "O": "Ops",
+      "D": "DeFi",
+      "N": "NFT",
+      "S": "Staking",
+      "B": "Builder"
+    },
+    "result": {
+      "title": "Scan result",
+      "scoreMax": "of 1000",
+      "factorFallback": "balance",
+      "radarLabel": "Wallet Score factor radar",
+      "summary": {
+        "steady": "This wallet is led by {{primary}} and {{secondary}}. A {{score}} score points to a steady history without sharp imbalance.",
+        "flow": "The wallet stands out through {{primary}} and {{secondary}}: movement, counterparties, and economic activity are the main signal.",
+        "explore": "{{primary}} and {{secondary}} dominate. This profile looks like an ecosystem user across tokens, collections, and protocols.",
+        "craft": "The leading factors are {{primary}} and {{secondary}}. The profile reads as a technical or infrastructure footprint on TON.",
+        "balanced": "The factors are evenly spread. A {{score}} score is built from several activity directions, with no single dominant signal."
+      }
+    },
     "telegramLanguage": {
       "ru": "Russian Telegram UI",
       "en": "English Telegram UI"
@@ -102,6 +125,26 @@
       "activeDays": "Active days",
       "economicVolume": "Economic volume",
       "strongestCategories": "Strongest categories"
+    },
+    "eligible": {
+      "title": "Eligible SBT categories",
+      "count_one": "{{count}} category in focus",
+      "count_other": "{{count}} categories in focus",
+      "actionable_one": "{{count}} can be minted or refreshed now",
+      "actionable_other": "{{count}} can be minted or refreshed now",
+      "noActionable": "No new mint is available yet",
+      "cta": "Go to mint",
+      "footer": "The Mint screen currently issues the main Passport on testnet; the permit comes from the backend and is forwarded unchanged.",
+      "footerLocked": "Categories are shown honestly from backend data; mint becomes active when the main Passport is eligible.",
+      "empty": "No eligible categories",
+      "emptyHint": "Keep using the wallet and scan again later.",
+      "status": {
+        "minted": "Minted",
+        "eligible": "Eligible",
+        "canMint": "Mint",
+        "canRefresh": "Refresh",
+        "locked": "Locked"
+      }
     },
     "categories": {
       "main": "Main Passport",
@@ -233,6 +276,16 @@
   "mainButton": {
     "scan": "Scan Wallet",
     "scanning": "Scanning..."
+  },
+  "wallet": {
+    "connectShort": "Connect",
+    "open": "Open wallet",
+    "sheetTitle": "Wallet",
+    "balance": "Balance",
+    "balanceUnavailable": "— TON",
+    "address": "Address",
+    "copy": "Copy address",
+    "copied": "Copied"
   },
   "referral": {
     "title": "Referral",

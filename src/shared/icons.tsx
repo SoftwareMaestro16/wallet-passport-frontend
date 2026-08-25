@@ -15,6 +15,20 @@ export function WalletIcon({ size = 28, className }: IconProps) {
   );
 }
 
+export function CopyIcon({ size = 28, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" className={className} aria-hidden="true">
+      <rect x="10" y="7" width="11" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.75" />
+      <path
+        d="M7 17.5V10c0-2.2 1.3-3.5 3.5-3.5H17"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function ProfileIcon({ size = 28, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" fill="none" className={className} aria-hidden="true">

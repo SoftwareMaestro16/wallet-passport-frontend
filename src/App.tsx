@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppRoot, Button, Tabbar } from "@telegram-apps/telegram-ui";
 import { TonConnectProvider } from "./ton/TonConnectProvider";
-import { WalletIcon, ProfileIcon, MintIcon } from "./shared/icons";
+import { WalletIcon, ProfileIcon, MintIcon, CopyIcon } from "./shared/icons";
 import { ConnectScreen } from "./features/connect/ConnectScreen";
 import { ScanningScreen } from "./features/scanning/ScanningScreen";
 import { ProfileScreen } from "./features/profile/ProfileScreen";
@@ -11,6 +11,7 @@ import { MintScreen } from "./features/mint/MintScreen";
 import { hapticImpact, isTelegramMiniApp, useTelegramAppearance, useTelegramMainButton } from "./app/telegram";
 import { useTonConnectAccount } from "./ton/useTonConnectAccount";
 import { useVerifiedProfile } from "./ton/useVerifiedProfile";
+import { useTonBalance } from "./ton/useTonBalance";
 import { TelegramOnlyGate } from "./shared/TelegramOnlyGate";
 import "@telegram-apps/telegram-ui/dist/styles.css";
 import "./App.css";
@@ -59,6 +60,23 @@ function shortHeaderAddress(address: string): string {
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
 
+async function copyText(value: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
+}
+
 const PROFILE_THEME_STORAGE_KEY = "wallet-passport-profile-theme";
 
 type AppTheme = "light" | "dark";
@@ -77,7 +95,12 @@ function AppShell() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { address, isConnected, tonConnectUI } = useTonConnectAccount();
+  const { balanceTon, isLoading: balanceLoading } = useTonBalance(isConnected ? address : null);
   const { state } = useVerifiedProfile();
+  const [walletSheetOpen, setWalletSheetOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const walletSheetRef = useRef<HTMLDivElement | null>(null);
+  const walletButtonRef = useRef<HTMLButtonElement | null>(null);
   const headerTitle = t("connect.title").replace(/^Wallet\s+/u, "");
   // Scanning is a focused, transient step (per TON_Relics spec §23) — hiding the tab bar there
   // keeps the user from bailing into Mint/Profile mid-scan instead of watching it finish.
@@ -94,12 +117,57 @@ function AppShell() {
   const handleWalletClick = useCallback(() => {
     hapticImpact("light");
     if (isConnected) {
-      void tonConnectUI.disconnect();
+      setWalletSheetOpen((open) => !open);
       return;
     }
 
     void tonConnectUI.openModal();
   }, [isConnected, tonConnectUI]);
+
+  const handleWalletCopy = useCallback(async () => {
+    if (!address) return;
+    try {
+      await copyText(address);
+      hapticImpact("light");
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {
+      hapticImpact("rigid");
+    }
+  }, [address]);
+
+  const handleWalletDisconnect = useCallback(() => {
+    hapticImpact("medium");
+    setWalletSheetOpen(false);
+    void tonConnectUI.disconnect();
+  }, [tonConnectUI]);
+
+  useEffect(() => {
+    if (!isConnected) {
+      setWalletSheetOpen(false);
+      setCopied(false);
+    }
+  }, [isConnected]);
+
+  useEffect(() => {
+    if (!walletSheetOpen) return undefined;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (walletSheetRef.current?.contains(target) || walletButtonRef.current?.contains(target)) return;
+      setWalletSheetOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setWalletSheetOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [walletSheetOpen]);
 
   useTelegramMainButton({
     text: scanInProgress ? t("mainButton.scanning") : t("mainButton.scan"),
@@ -117,19 +185,69 @@ function AppShell() {
             <span>{headerTitle}</span>
           </div>
           <button
+            ref={walletButtonRef}
             type="button"
             className="app-tonconnect-button"
             onClick={handleWalletClick}
-            aria-label={isConnected ? t("profile.disconnect") : t("connect.connectButton")}
-            title={isConnected ? t("profile.disconnect") : t("connect.connectButton")}
+            aria-expanded={isConnected ? walletSheetOpen : undefined}
+            aria-haspopup={isConnected ? "dialog" : undefined}
+            aria-label={isConnected ? t("wallet.open") : t("connect.connectButton")}
+            title={isConnected ? t("wallet.open") : t("connect.connectButton")}
           >
             <span className="app-tonconnect-icon" aria-hidden="true">
-              TON
+              <WalletIcon size={19} />
             </span>
             <span className="app-tonconnect-label">
-              {isConnected ? shortHeaderAddress(address) : t("connect.connectButton")}
+              {isConnected ? shortHeaderAddress(address) : t("wallet.connectShort")}
             </span>
           </button>
+          {isConnected && walletSheetOpen && (
+            <div className="wallet-sheet-backdrop" aria-hidden="true" />
+          )}
+          {isConnected && walletSheetOpen && (
+            <div
+              ref={walletSheetRef}
+              className="wallet-sheet"
+              role="dialog"
+              aria-modal="false"
+              aria-label={t("wallet.sheetTitle")}
+            >
+              <div className="wallet-sheet-handle" aria-hidden="true" />
+              <div className="wallet-sheet-head">
+                <span className="wallet-sheet-icon" aria-hidden="true">
+                  <WalletIcon size={21} />
+                </span>
+                <div className="wallet-sheet-title">
+                  <strong>{t("wallet.sheetTitle")}</strong>
+                  <span>{shortHeaderAddress(address)}</span>
+                </div>
+              </div>
+              <div className="wallet-sheet-info">
+                <div>
+                  <span>{t("wallet.balance")}</span>
+                  <strong>{balanceLoading ? t("common.loading") : (balanceTon ?? t("wallet.balanceUnavailable"))}</strong>
+                </div>
+                <div>
+                  <span>{t("wallet.address")}</span>
+                  <strong className="mono">{address}</strong>
+                </div>
+              </div>
+              <div className="wallet-sheet-actions">
+                <button
+                  type="button"
+                  className="wallet-copy-button"
+                  onClick={handleWalletCopy}
+                  aria-label={copied ? t("wallet.copied") : t("wallet.copy")}
+                  title={copied ? t("wallet.copied") : t("wallet.copy")}
+                >
+                  <CopyIcon size={20} />
+                </button>
+                <button type="button" className="wallet-disconnect-button" onClick={handleWalletDisconnect}>
+                  {t("profile.disconnect")}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         {showNav && <Nav />}
       </header>

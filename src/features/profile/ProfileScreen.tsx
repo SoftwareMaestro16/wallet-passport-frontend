@@ -57,6 +57,25 @@ function factorValue(stats: WalletProfileResponse["score"], code: ScoreFactorCod
   return stats.factors.find((f) => f.code === code)?.value ?? 0;
 }
 
+function factorLabelKey(code: ScoreFactorCode): string {
+  return `profile.factors.${code}`;
+}
+
+function factorTone(code: ScoreFactorCode): string {
+  if (code === "A" || code === "C") return "steady";
+  if (code === "E" || code === "O") return "flow";
+  if (code === "D" || code === "N") return "explore";
+  return "craft";
+}
+
+function dominantSummaryKey(code: ScoreFactorCode | undefined): string {
+  if (code === "A" || code === "C") return "profile.result.summary.steady";
+  if (code === "E" || code === "O") return "profile.result.summary.flow";
+  if (code === "D" || code === "N") return "profile.result.summary.explore";
+  if (code === "S" || code === "B") return "profile.result.summary.craft";
+  return "profile.result.summary.balanced";
+}
+
 function ComingSoonCell({ title, body, badge }: { title: string; body: string; badge: string }) {
   return (
     <Section header={title}>
@@ -311,7 +330,7 @@ function ProfileResult({
   referralMe: ReturnType<typeof useReferralMe>;
 }) {
   const { score, stats } = data;
-  const topFactors = [...score.factors].sort((a, b) => b.value - a.value).slice(0, 3);
+  const topFactors = score.dominantFactors ?? [...score.factors].sort((a, b) => b.value - a.value).slice(0, 3);
   const firstTx = formatDate(stats.firstTxAt, lang);
   const passportsList = passports.state.status === "ready" ? passports.state.data.categories : null;
   const mainCategory = passportsList?.find((c) => c.category === "passport");
@@ -335,19 +354,7 @@ function ProfileResult({
 
   return (
     <>
-      <Section header={t("profile.reveal.title")} footer={t("profile.reveal.footer")}>
-        <Cell
-          multiline
-          after={
-            <Badge type="number" mode="primary">
-              {score.tier}
-            </Badge>
-          }
-          subtitle={t("profile.reveal.subtitle")}
-        >
-          {t("profile.reveal.ready")}
-        </Cell>
-      </Section>
+      <ProfileResultBlock data={data} topFactors={topFactors} lang={lang} t={t} />
 
       <Section header={t("profile.summary.title")}>
         <div className="sample-card-body">
@@ -364,7 +371,7 @@ function ProfileResult({
           value={`${formatTon(stats.economicVolumeNanoTon, lang)} TON`}
         />
         <Cell subtitle={t("profile.summary.strongestCategories")} multiline>
-          {topFactors.map((f) => `${f.factor} ${Math.round(f.value)}`).join(" · ")}
+          {topFactors.map((f) => `${t(factorLabelKey(f.code))} ${Math.round(f.value)}`).join(" · ")}
         </Cell>
       </Section>
 
@@ -452,14 +459,8 @@ function ProfileResult({
         badge={t("profile.sections.comingSoon.badge")}
       />
 
-      {/* Endpoint is being added concurrently and may 404 pre-rollout — hide the section entirely
-          rather than show a stub, per the honesty requirement (no fabricated/placeholder state). */}
       {passportsList && (
-        <Section header={t("profile.sections.passports.title")}>
-          {passportsList.map((cat) => (
-            <PassportCategoryCell key={cat.categoryId} category={cat} t={t} />
-          ))}
-        </Section>
+        <EligiblePassportsBlock categories={passportsList} t={t} navigate={navigate} />
       )}
 
       <Section header={t("profile.actions.title")}>
@@ -615,7 +616,195 @@ function ProfileResult({
   );
 }
 
-function PassportCategoryCell({
+function ProfileResultBlock({
+  data,
+  topFactors,
+  lang,
+  t,
+}: {
+  data: WalletProfileResponse;
+  topFactors: WalletProfileResponse["score"]["factors"];
+  lang: string;
+  t: ReturnType<typeof useTranslation>["t"];
+}) {
+  const { score, stats } = data;
+  const dominant = topFactors[0];
+  const secondary = topFactors[1];
+  const summary = t(dominantSummaryKey(dominant?.code), {
+    primary: dominant ? t(factorLabelKey(dominant.code)) : t("profile.result.factorFallback"),
+    secondary: secondary ? t(factorLabelKey(secondary.code)) : t("profile.result.factorFallback"),
+    score: score.tonScore,
+  });
+
+  return (
+    <Section header={t("profile.result.title")} footer={t("profile.reveal.footer")}>
+      <div className="profile-result-card">
+        <div className="profile-result-score">
+          <div className="profile-score-hex" aria-label={`${t("profile.scoreLabel")} ${score.tonScore}`}>
+            <span>{score.tonScore}</span>
+            <small>{t("profile.result.scoreMax")}</small>
+          </div>
+          <div className="profile-result-copy">
+            <Badge type="number" mode="primary">
+              {score.tier}
+            </Badge>
+            <h2>{t("profile.reveal.ready")}</h2>
+            <p>{summary}</p>
+          </div>
+        </div>
+        <FactorRadar factors={score.factors} topFactors={topFactors} t={t} />
+        <div className="profile-result-metrics">
+          <div>
+            <strong>{t("profile.summary.walletAgeDays", { count: Math.round(stats.walletAgeDays) })}</strong>
+            <span>{t("profile.summary.walletAge")}</span>
+          </div>
+          <div>
+            <strong>{formatNumber(stats.totalTxCount, lang)}</strong>
+            <span>{t("profile.summary.transactions")}</span>
+          </div>
+          <div>
+            <strong>{formatTon(stats.economicVolumeNanoTon, lang)} TON</strong>
+            <span>{t("profile.summary.economicVolume")}</span>
+          </div>
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+function FactorRadar({
+  factors,
+  topFactors,
+  t,
+}: {
+  factors: WalletProfileResponse["score"]["factors"];
+  topFactors: WalletProfileResponse["score"]["factors"];
+  t: ReturnType<typeof useTranslation>["t"];
+}) {
+  const size = 184;
+  const center = size / 2;
+  const maxRadius = 64;
+  const ordered = factors.length > 0 ? factors : topFactors;
+  const topCodes = new Set(topFactors.map((factor) => factor.code));
+  const points = ordered.map((factor, index) => {
+    const angle = -Math.PI / 2 + (index * 2 * Math.PI) / ordered.length;
+    const valueRadius = (Math.max(0, Math.min(100, factor.value)) / 100) * maxRadius;
+    const axisX = center + Math.cos(angle) * maxRadius;
+    const axisY = center + Math.sin(angle) * maxRadius;
+    const valueX = center + Math.cos(angle) * valueRadius;
+    const valueY = center + Math.sin(angle) * valueRadius;
+    const labelX = center + Math.cos(angle) * (maxRadius + 18);
+    const labelY = center + Math.sin(angle) * (maxRadius + 18);
+    return { factor, axisX, axisY, valueX, valueY, labelX, labelY };
+  });
+  const polygonPoints = points.map((point) => `${point.valueX},${point.valueY}`).join(" ");
+  const gridScales = [0.33, 0.66, 1];
+  const axisCount = Math.max(ordered.length, 3);
+
+  return (
+    <div className="factor-radar-wrap" aria-label={t("profile.result.radarLabel")}>
+      <svg className="factor-radar" viewBox={`0 0 ${size} ${size}`} role="img">
+        {gridScales.map((scale) => {
+          const gridPoints = Array.from({ length: axisCount }, (_, index) => {
+            const angle = -Math.PI / 2 + (index * 2 * Math.PI) / axisCount;
+            return `${center + Math.cos(angle) * maxRadius * scale},${center + Math.sin(angle) * maxRadius * scale}`;
+          }).join(" ");
+          return <polygon key={scale} points={gridPoints} className="factor-radar-grid" />;
+        })}
+        {points.map((point) => (
+          <line
+            key={point.factor.code}
+            x1={center}
+            y1={center}
+            x2={point.axisX}
+            y2={point.axisY}
+            className="factor-radar-axis"
+          />
+        ))}
+        <polygon points={polygonPoints} className="factor-radar-shape" />
+        {points.map((point) => (
+          <g key={point.factor.code}>
+            <circle
+              cx={point.valueX}
+              cy={point.valueY}
+              r={topCodes.has(point.factor.code) ? 4 : 3}
+              className={`factor-radar-dot factor-radar-dot-${factorTone(point.factor.code)}`}
+            />
+            <text x={point.labelX} y={point.labelY} textAnchor="middle" dominantBaseline="middle">
+              {t(factorLabelKey(point.factor.code))}
+            </text>
+          </g>
+        ))}
+      </svg>
+      <div className="factor-pill-row">
+        {topFactors.map((factor) => (
+          <span key={factor.code} className={`factor-pill factor-pill-${factorTone(factor.code)}`}>
+            {t(factorLabelKey(factor.code))} · {Math.round(factor.value)}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EligiblePassportsBlock({
+  categories,
+  t,
+  navigate,
+}: {
+  categories: WalletPassportCategoryStatus[];
+  t: ReturnType<typeof useTranslation>["t"];
+  navigate: (path: string) => void;
+}) {
+  const visibleCategories = categories.filter(
+    (category) => category.eligible || category.canMint || category.canRefresh || category.existsOnChain,
+  );
+  const actionableCount = visibleCategories.filter((category) => category.canMint || category.canRefresh).length;
+  const hasMainPassportAction = categories.some(
+    (category) => category.category === "passport" && (category.canMint || category.canRefresh || category.eligible),
+  );
+
+  return (
+    <Section
+      header={t("profile.eligible.title")}
+      footer={hasMainPassportAction ? t("profile.eligible.footer") : t("profile.eligible.footerLocked")}
+    >
+      <div className="eligible-passport-block">
+        <div className="eligible-passport-head">
+          <div>
+            <strong>{t("profile.eligible.count", { count: visibleCategories.length })}</strong>
+            <span>
+              {actionableCount > 0
+                ? t("profile.eligible.actionable", { count: actionableCount })
+                : t("profile.eligible.noActionable")}
+            </span>
+          </div>
+          <Button
+            size="s"
+            disabled={!hasMainPassportAction}
+            onClick={() => {
+              hapticSelection();
+              navigate("/mint");
+            }}
+          >
+            {t("profile.eligible.cta")}
+          </Button>
+        </div>
+        {visibleCategories.length > 0 ? (
+          <div className="eligible-category-grid">
+            {visibleCategories.map((category) => (
+              <PassportCategoryTile key={category.categoryId} category={category} t={t} />
+            ))}
+          </div>
+        ) : (
+          <Cell subtitle={t("profile.eligible.emptyHint")}>{t("profile.eligible.empty")}</Cell>
+        )}
+      </div>
+    </Section>
+  );
+}
+
+function PassportCategoryTile({
   category,
   t,
 }: {
@@ -623,21 +812,27 @@ function PassportCategoryCell({
   t: ReturnType<typeof useTranslation>["t"];
 }) {
   const label = t(CATEGORY_LABEL_KEYS[category.category] ?? category.category);
+  const statusKey = category.existsOnChain
+    ? "minted"
+    : category.canMint
+      ? "canMint"
+      : category.canRefresh
+        ? "canRefresh"
+        : category.eligible
+          ? "eligible"
+          : "locked";
   const subtitle = category.existsOnChain
     ? t("profile.sections.passports.minted", { revision: category.revision })
-    : category.eligible
-      ? t("profile.sections.passports.eligible")
-      : t("profile.sections.passports.notEligible");
-  const badgeText = category.canMint
-    ? t("profile.sections.passports.canMint")
-    : category.canRefresh
-      ? t("profile.sections.passports.canRefresh")
-      : t("profile.sections.passports.locked");
+    : t(`profile.sections.passports.${statusKey}`);
 
   return (
-    <Cell subtitle={subtitle} after={<Badge type="number">{badgeText}</Badge>}>
-      {label}
-    </Cell>
+    <div className={`eligible-category-tile eligible-category-tile-${statusKey}`}>
+      <span>{label}</span>
+      <Badge type="number" mode={category.canMint || category.canRefresh ? "primary" : "secondary"}>
+        {t(`profile.eligible.status.${statusKey}`)}
+      </Badge>
+      <small>{subtitle}</small>
+    </div>
   );
 }
 

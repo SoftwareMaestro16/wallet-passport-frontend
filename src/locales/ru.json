@@ -66,6 +66,29 @@
     "retry": "Повторить",
     "scoreLabel": "TON Score",
     "walletLabel": "Кошелёк",
+    "factors": {
+      "A": "Возраст",
+      "C": "Ритм",
+      "E": "Объём",
+      "O": "Операции",
+      "D": "DeFi",
+      "N": "NFT",
+      "S": "Стейкинг",
+      "B": "Билдер"
+    },
+    "result": {
+      "title": "Результат скана",
+      "scoreMax": "из 1000",
+      "factorFallback": "баланс",
+      "radarLabel": "Radar факторов Wallet Score",
+      "summary": {
+        "steady": "Главный профиль кошелька — {{primary}} и {{secondary}}. Score {{score}} показывает устойчивую историю без резких перекосов.",
+        "flow": "Кошелёк сильнее всего раскрывается через {{primary}} и {{secondary}}: много движения, контрагентов и экономической активности.",
+        "explore": "Доминируют {{primary}} и {{secondary}}. Такой профиль ближе к пользователю экосистемы: токены, коллекции и протоколы.",
+        "craft": "Ведущие факторы — {{primary}} и {{secondary}}. Профиль выглядит как технический или инфраструктурный след в TON.",
+        "balanced": "Факторы распределены ровно. Score {{score}} собран из нескольких направлений активности, без одного явного доминирующего сигнала."
+      }
+    },
     "telegramLanguage": {
       "ru": "Русский интерфейс Telegram",
       "en": "English Telegram UI"
@@ -104,6 +127,30 @@
       "activeDays": "Активные дни",
       "economicVolume": "Экономический объём",
       "strongestCategories": "Сильнейшие категории"
+    },
+    "eligible": {
+      "title": "Доступные SBT категории",
+      "count_one": "{{count}} категория в фокусе",
+      "count_few": "{{count}} категории в фокусе",
+      "count_many": "{{count}} категорий в фокусе",
+      "count_other": "{{count}} категорий в фокусе",
+      "actionable_one": "{{count}} можно выпустить или обновить сейчас",
+      "actionable_few": "{{count}} можно выпустить или обновить сейчас",
+      "actionable_many": "{{count}} можно выпустить или обновить сейчас",
+      "actionable_other": "{{count}} можно выпустить или обновить сейчас",
+      "noActionable": "Новые выпуски пока недоступны",
+      "cta": "Перейти к mint",
+      "footer": "Mint screen пока выпускает основной Passport на testnet; permit приходит с backend и отправляется без изменений.",
+      "footerLocked": "Категории показаны честно по данным backend; mint станет активным, когда основной Passport будет доступен.",
+      "empty": "Нет доступных категорий",
+      "emptyHint": "Продолжайте пользоваться кошельком и повторите скан позже.",
+      "status": {
+        "minted": "Выпущен",
+        "eligible": "Доступен",
+        "canMint": "Mint",
+        "canRefresh": "Refresh",
+        "locked": "Закрыт"
+      }
     },
     "categories": {
       "main": "Основной паспорт",
@@ -235,6 +282,16 @@
   "mainButton": {
     "scan": "Scan Wallet",
     "scanning": "Scanning..."
+  },
+  "wallet": {
+    "connectShort": "Connect",
+    "open": "Открыть кошелёк",
+    "sheetTitle": "Кошелёк",
+    "balance": "Баланс",
+    "balanceUnavailable": "— TON",
+    "address": "Адрес",
+    "copy": "Скопировать адрес",
+    "copied": "Скопировано"
   },
   "referral": {
     "title": "Referral",

@@ -97,10 +97,11 @@
   padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 8px;
   background: color-mix(in srgb, var(--tgui--bg_color, #0f0f10) 92%, transparent);
   border-bottom: 1px solid var(--tgui--divider);
-  z-index: 2;
+  z-index: 20;
 }
 
 .app-header-main {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -176,6 +177,11 @@
   line-height: 1;
 }
 
+.app-tonconnect-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
 .app-tonconnect-label {
   min-width: 0;
   overflow: hidden;
@@ -185,6 +191,160 @@
   line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.wallet-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: color-mix(in srgb, #000 28%, transparent);
+  animation: wallet-sheet-fade 150ms ease-out;
+}
+
+.wallet-sheet {
+  position: fixed;
+  left: 10px;
+  right: 10px;
+  bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  display: grid;
+  gap: 14px;
+  padding: 10px 12px 12px;
+  border: 1px solid color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 28%, var(--tgui--outline));
+  border-radius: 8px 8px 0 0;
+  background: color-mix(in srgb, var(--tgui--secondary_bg_color, #ffffff) 98%, var(--tg-theme-button-color, #2ea6ff));
+  color: var(--tgui--text_color);
+  box-shadow: 0 -18px 56px color-mix(in srgb, #000 34%, transparent);
+  animation: wallet-sheet-enter 170ms ease-out;
+}
+
+.wallet-sheet-handle {
+  justify-self: center;
+  width: 42px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--tgui--outline);
+}
+
+.wallet-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.wallet-sheet-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 18%, var(--tgui--bg_color));
+  color: var(--tg-theme-button-color, #2ea6ff);
+}
+
+.wallet-sheet-title {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.wallet-sheet-title strong,
+.wallet-sheet-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wallet-sheet-title strong {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.wallet-sheet-title span {
+  color: var(--tgui--subtitle_text_color);
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.wallet-sheet-info {
+  display: grid;
+  gap: 8px;
+}
+
+.wallet-sheet-info div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--tgui--outline);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tgui--bg_color) 52%, var(--tgui--secondary_bg_color));
+}
+
+.wallet-sheet-info span {
+  color: var(--tgui--subtitle_text_color);
+  font-size: 12px;
+  line-height: 1.15;
+}
+
+.wallet-sheet-info strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--tgui--text_color);
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.wallet-sheet-actions {
+  display: grid;
+  grid-template-columns: minmax(52px, 18%) 1fr;
+  gap: 8px;
+}
+
+.wallet-copy-button,
+.wallet-disconnect-button {
+  display: inline-grid;
+  place-items: center;
+  min-height: 48px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 120ms ease,
+    filter 120ms ease;
+}
+
+.wallet-copy-button {
+  color: var(--tg-theme-button-color, #2ea6ff);
+  background: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 14%, var(--tgui--bg_color));
+}
+
+.wallet-disconnect-button {
+  min-width: 0;
+  padding: 0 14px;
+  overflow: hidden;
+  background: var(--tg-theme-button-color, #2ea6ff);
+  color: var(--tg-theme-button-text-color, #ffffff);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wallet-copy-button:active,
+.wallet-disconnect-button:active {
+  transform: scale(0.98);
+}
+
+.wallet-copy-button:focus-visible,
+.wallet-disconnect-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 62%, transparent);
+  outline-offset: 2px;
 }
 
 .telegram-only-shell {
@@ -332,6 +492,282 @@
 
 .sample-card-body {
   padding: 12px 16px 4px;
+}
+
+.profile-result-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px 16px 16px;
+}
+
+.profile-result-score {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+.profile-score-hex {
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 116px;
+  clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%);
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 90%, #ffffff),
+      color-mix(in srgb, #19c37d 64%, var(--tg-theme-button-color, #2ea6ff))
+    );
+  color: var(--tg-theme-button-text-color, #ffffff);
+  box-shadow: 0 16px 34px color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 24%, transparent);
+}
+
+.profile-score-hex span,
+.profile-score-hex small {
+  display: block;
+}
+
+.profile-score-hex span {
+  font-size: 32px;
+  font-weight: 820;
+  line-height: 1;
+}
+
+.profile-score-hex small {
+  margin-top: -20px;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+.profile-result-copy {
+  min-width: 0;
+}
+
+.profile-result-copy h2 {
+  margin: 8px 0 6px;
+  color: var(--tgui--text_color);
+  font-size: 22px;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.profile-result-copy p {
+  margin: 0;
+  color: var(--tgui--subtitle_text_color);
+  font-size: 14px;
+  line-height: 1.38;
+}
+
+.factor-radar-wrap {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 10px 8px 12px;
+  border: 1px solid var(--tgui--outline);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 16%, transparent), transparent 58%),
+    color-mix(in srgb, var(--tgui--secondary_bg_color) 74%, var(--tgui--bg_color));
+}
+
+.factor-radar {
+  width: min(100%, 220px);
+  height: auto;
+  overflow: visible;
+}
+
+.factor-radar-grid {
+  fill: none;
+  stroke: color-mix(in srgb, var(--tgui--text_color) 15%, transparent);
+  stroke-width: 1;
+}
+
+.factor-radar-axis {
+  stroke: color-mix(in srgb, var(--tgui--text_color) 13%, transparent);
+  stroke-width: 1;
+}
+
+.factor-radar-shape {
+  fill: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 28%, transparent);
+  stroke: var(--tg-theme-button-color, #2ea6ff);
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.factor-radar-dot {
+  stroke: var(--tgui--section_bg_color);
+  stroke-width: 1.5;
+}
+
+.factor-radar-dot-steady,
+.factor-pill-steady {
+  --factor-tone: #19c37d;
+}
+
+.factor-radar-dot-flow,
+.factor-pill-flow {
+  --factor-tone: #2ea6ff;
+}
+
+.factor-radar-dot-explore,
+.factor-pill-explore {
+  --factor-tone: #f0b429;
+}
+
+.factor-radar-dot-craft,
+.factor-pill-craft {
+  --factor-tone: #d96570;
+}
+
+.factor-radar-dot {
+  fill: var(--factor-tone);
+}
+
+.factor-radar text {
+  fill: var(--tgui--subtitle_text_color);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.factor-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.factor-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--factor-tone) 34%, var(--tgui--outline));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--factor-tone) 12%, var(--tgui--secondary_bg_color));
+  color: var(--tgui--text_color);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.profile-result-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.profile-result-metrics div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--tgui--outline);
+  border-radius: 8px;
+  background: var(--tgui--secondary_bg_color);
+}
+
+.profile-result-metrics strong,
+.profile-result-metrics span {
+  display: block;
+}
+
+.profile-result-metrics strong {
+  overflow-wrap: anywhere;
+  color: var(--tgui--text_color);
+  font-size: 15px;
+  line-height: 1.15;
+}
+
+.profile-result-metrics span {
+  margin-top: 5px;
+  color: var(--tgui--subtitle_text_color);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.eligible-passport-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
+
+.eligible-passport-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 28%, var(--tgui--outline));
+  border-radius: 8px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 14%, var(--tgui--secondary_bg_color)),
+      color-mix(in srgb, #19c37d 10%, var(--tgui--secondary_bg_color))
+    );
+}
+
+.eligible-passport-head strong,
+.eligible-passport-head span {
+  display: block;
+}
+
+.eligible-passport-head strong {
+  color: var(--tgui--text_color);
+  font-size: 18px;
+  line-height: 1.18;
+}
+
+.eligible-passport-head span {
+  margin-top: 4px;
+  color: var(--tgui--subtitle_text_color);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.eligible-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.eligible-category-tile {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 104px;
+  gap: 8px;
+  padding: 11px;
+  border: 1px solid var(--tgui--outline);
+  border-radius: 8px;
+  background: var(--tgui--secondary_bg_color);
+}
+
+.eligible-category-tile-canMint,
+.eligible-category-tile-canRefresh {
+  border-color: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 42%, var(--tgui--outline));
+  background: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 10%, var(--tgui--secondary_bg_color));
+}
+
+.eligible-category-tile-minted {
+  border-color: color-mix(in srgb, #19c37d 38%, var(--tgui--outline));
+  background: color-mix(in srgb, #19c37d 10%, var(--tgui--secondary_bg_color));
+}
+
+.eligible-category-tile > span {
+  color: var(--tgui--text_color);
+  font-weight: 760;
+  line-height: 1.15;
+}
+
+.eligible-category-tile small {
+  margin-top: auto;
+  color: var(--tgui--subtitle_text_color);
+  font-size: 12px;
+  line-height: 1.24;
 }
 
 .hero-panel {
@@ -625,10 +1061,35 @@
   }
 }
 
+@keyframes wallet-sheet-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes wallet-sheet-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .app-tonconnect-button:hover {
     border-color: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 58%, transparent);
     transform: translateY(-1px);
+  }
+
+  .wallet-copy-button:hover,
+  .wallet-disconnect-button:hover {
+    filter: brightness(1.04);
   }
 
   .screen :where(button:not(:disabled), a, [role="button"]):hover {
@@ -652,6 +1113,10 @@
 
   .screen :where(button, a, [role="button"]),
   .app-tonconnect-button,
+  .wallet-sheet-backdrop,
+  .wallet-sheet,
+  .wallet-copy-button,
+  .wallet-disconnect-button,
   .referral-modal-backdrop,
   .referral-modal,
   .menu-card,
@@ -663,6 +1128,8 @@
   .screen :where(button:not(:disabled), a, [role="button"]):active,
   .app-tonconnect-button:active,
   .app-tonconnect-button:hover,
+  .wallet-copy-button:active,
+  .wallet-disconnect-button:active,
   .menu-card:hover,
   .referral-stats-grid div:hover {
     transform: none;
@@ -674,6 +1141,20 @@
 }
 
 @media (max-width: 380px) {
+  .profile-result-score,
+  .eligible-passport-head,
+  .eligible-category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-score-hex {
+    justify-self: center;
+  }
+
+  .profile-result-metrics {
+    grid-template-columns: 1fr;
+  }
+
   .referral-modal-actions {
     grid-template-columns: 1fr;
   }
@@ -703,6 +1184,26 @@
 
   .app-tonconnect-button {
     max-width: 260px;
+  }
+
+  .wallet-sheet-backdrop {
+    display: none;
+  }
+
+  .wallet-sheet {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    bottom: auto;
+    left: auto;
+    width: min(360px, calc(100vw - 32px));
+    border-radius: 8px;
+    box-shadow: 0 18px 54px color-mix(in srgb, #000 28%, transparent);
+    animation-name: referral-modal-enter;
+  }
+
+  .wallet-sheet-handle {
+    display: none;
   }
 
   .app-tabbar {

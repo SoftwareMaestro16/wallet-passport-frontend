@@ -206,6 +206,7 @@ export interface WalletScoreResult {
   specialization: number;
   base: number;
   factors: ScoreFactor[];
+  dominantFactors?: ScoreFactor[];
 }
 
 export interface DataConfidence {
