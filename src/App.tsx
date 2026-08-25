@@ -137,7 +137,14 @@ function AppShell({ theme }: { theme: AppTheme }) {
 
 export default function App() {
   const { platform, appearance } = useTelegramAppearance();
-  const isTelegram = isTelegramMiniApp();
+  // Computed once at mount, not on every render: some Telegram clients clear the
+  // `tgWebAppData` URL hash shortly after launch (once they've read it), and
+  // `@twa-dev/sdk`'s `WebApp.initData` can still be empty at that point (see
+  // getTelegramInitData's doc comment). Re-deriving this on every render made the whole
+  // app shell — including the header and its TonConnect button — flip to
+  // TelegramOnlyGate a moment after mount, once the hash was gone and the SDK's own
+  // initData hadn't caught up yet.
+  const [isTelegram] = useState(isTelegramMiniApp);
   const allowBrowserPreview = import.meta.env.DEV;
   const [theme, setTheme] = useState<AppTheme>(() => readStoredTheme(!isTelegram && allowBrowserPreview ? "dark" : appearance));
 
