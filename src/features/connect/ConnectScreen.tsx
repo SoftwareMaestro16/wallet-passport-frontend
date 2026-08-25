@@ -5,16 +5,15 @@ import { hapticImpact } from "../../app/telegram";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { useWalletProfile } from "../profile/useWalletProfile";
+import { ScanResult } from "./ScanResult";
 
 export function ConnectScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { isConnected, state } = useVerifiedProfile();
   const { address } = useTonConnectAccount();
-  const { state: walletProfileState } = useWalletProfile(
-    isConnected && state.status === "success" ? address : undefined,
-  );
-  const hasCompletedScan = walletProfileState.status === "ready";
+  const walletProfile = useWalletProfile(isConnected && state.status === "success" ? address : undefined);
+  const hasCompletedScan = walletProfile.state.status === "ready";
 
   function handleScan() {
     hapticImpact("medium");
@@ -49,6 +48,30 @@ export function ConnectScreen() {
             {hasCompletedScan ? t("connect.updateButton") : t("connect.scanButton")}
           </Button>
         </div>
+      )}
+
+      {isConnected && state.status === "success" && walletProfile.state.status === "loading" && (
+        <Section>
+          <Cell before={<Spinner size="s" />}>{t("profile.loadingProfile")}</Cell>
+        </Section>
+      )}
+
+      {isConnected && state.status === "success" && walletProfile.state.status === "error" && (
+        <Section footer={t("profile.profileError")}>
+          <Cell
+            after={
+              <Button size="s" mode="outline" onClick={walletProfile.reload}>
+                {t("profile.retry")}
+              </Button>
+            }
+          >
+            {t("common.error")}
+          </Cell>
+        </Section>
+      )}
+
+      {isConnected && state.status === "success" && walletProfile.state.status === "ready" && (
+        <ScanResult data={walletProfile.state.data} lang={i18n.language} t={t} />
       )}
     </div>
   );

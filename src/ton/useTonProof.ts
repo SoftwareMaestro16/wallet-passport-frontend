@@ -48,7 +48,6 @@ export function useTonProof() {
       pushDebug(`initData length=${initData.length}`);
       const auth = await api.telegramAuth(initData);
       pushDebug(`telegramAuth OK user=${auth.user.id}`);
-      saveReferralCode(auth.user.referralCode);
       const { payload } = await api.getTonProofPayload(initData);
       pushDebug(`ton_proof payload received (${payload.length} chars)`);
       tonConnectUI.setConnectRequestParameters({ state: "ready", value: { tonProof: payload } });
@@ -97,9 +96,12 @@ export function useTonProof() {
     );
     verifyPromiseCache = { payload, promise };
     promise
-      .then(() => {
+      .then((result) => {
         setVerifyError(null);
         pushDebug("verify OK");
+        // Cached per-wallet code (see shared/referral.ts) is only a fallback for the brief
+        // window before ProfileScreen's `GET /referrals/me` resolves — see useReferralMe.
+        saveReferralCode(result.binding.referralCode);
       })
       .catch((err) => {
         const message = err instanceof ApiError

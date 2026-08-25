@@ -260,6 +260,11 @@
   gap: 6px;
   width: 100%;
   min-width: 0;
+  padding: 6px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--tgui--bg_color) 60%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
 }
 
 .app-topnav-item {
@@ -276,8 +281,9 @@
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   padding: 10px 0 16px;
-  /* Tabbar is fixed/full-viewport (telegram-ui FixedLayout) — keep content clear of it. */
-  padding-bottom: calc(84px + var(--tgui--safe_area_inset_bottom, 0px));
+  /* .app-tabbar floats above the viewport edge now (own height + its bottom margin) —
+     keep content clear of that whole footprint, not just the bar's own height. */
+  padding-bottom: calc(112px + var(--tgui--safe_area_inset_bottom, 0px));
 }
 
 .content-col {
@@ -289,17 +295,30 @@
   margin-inline: auto;
 }
 
-/* Tabbar.className: telegram-ui's FixedLayout spans the whole viewport (left:0;right:0), which
-   only matches content width on an actual phone. Re-center it to the same 480px column as
-   .app-shell so desktop/browser preview during QA doesn't show a full-bleed bar under a narrow
-   centered page. No-op on real mobile widths (<=480px). */
+/* Floating "liquid glass" tabbar: detached from the screen edges with margin on every side
+   (including bottom, layered on top of the safe-area inset so it clears the home indicator),
+   pill-rounded, frosted background tinted from the theme's own surface tokens so it flips with
+   light/dark instead of a hardcoded color. Also re-centers/caps the width so desktop/browser
+   preview during QA doesn't show a full-bleed bar under a narrow centered page — no-op on real
+   mobile widths. */
 .app-tabbar {
-  left: 50%;
-  right: auto;
-  width: 100%;
-  max-width: 599px;
-  transform: translateX(-50%);
-  border-top: 1px solid var(--tgui--divider);
+  left: 12px;
+  right: 12px;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  width: auto;
+  max-width: 560px;
+  margin-inline: auto;
+  transform: none;
+  border-radius: 26px;
+  border: 1px solid var(--tgui--outline);
+  background: color-mix(in srgb, var(--tgui--secondary_bg_color) 70%, transparent);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow:
+    0 12px 32px color-mix(in srgb, #000 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #fff 8%, transparent);
+  padding-bottom: 0;
+  overflow: hidden;
 }
 
 .screen {
@@ -336,7 +355,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 0 16px;
+  padding: 16px;
 }
 
 .connect-free-copy {
@@ -426,7 +445,7 @@
   gap: 10px;
   padding: 10px 8px 12px;
   border: 1px solid var(--tgui--outline);
-  border-radius: 8px;
+  border-radius: 18px;
   background:
     radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 16%, transparent), transparent 58%),
     color-mix(in srgb, var(--tgui--secondary_bg_color) 74%, var(--tgui--bg_color));
@@ -523,7 +542,7 @@
   min-width: 0;
   padding: 10px;
   border: 1px solid var(--tgui--outline);
-  border-radius: 8px;
+  border-radius: 16px;
   background: var(--tgui--secondary_bg_color);
 }
 
@@ -546,6 +565,51 @@
   line-height: 1.2;
 }
 
+/* SegmentedControl defaults to width/height 100% (meant for a full-width row) — this one lives in
+   a Cell's `after` slot next to a label, so it needs an explicit compact footprint instead. */
+.profile-language-segmented {
+  width: 148px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.profile-header-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  margin: 0 10px 10px;
+  border: 1px solid var(--tgui--outline);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 12%, transparent), transparent 60%),
+    color-mix(in srgb, var(--tgui--secondary_bg_color) 82%, var(--tgui--bg_color));
+}
+
+.profile-header-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.profile-header-name {
+  overflow: hidden;
+  color: var(--tgui--text_color);
+  font-size: 18px;
+  font-weight: 760;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-header-subtitle {
+  color: var(--tgui--subtitle_text_color);
+  font-size: 13px;
+  line-height: 1.3;
+}
+
 .eligible-passport-block {
   display: flex;
   flex-direction: column;
@@ -560,7 +624,7 @@
   gap: 12px;
   padding: 12px;
   border: 1px solid color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 28%, var(--tgui--outline));
-  border-radius: 8px;
+  border-radius: 18px;
   background:
     linear-gradient(
       135deg,
@@ -601,7 +665,7 @@
   gap: 8px;
   padding: 11px;
   border: 1px solid var(--tgui--outline);
-  border-radius: 8px;
+  border-radius: 16px;
   background: var(--tgui--secondary_bg_color);
 }
 
@@ -629,8 +693,33 @@
   line-height: 1.24;
 }
 
+/* Scan/Mint screens: give every Section its own rounded "liquid glass" card instead of the
+   library's plain full-bleed default, matching the profile-header-card/eligible-passport-head
+   card language already established elsewhere. Scoped to these two screens only — Profile keeps
+   its existing plain Section look since that wasn't part of this polish pass. */
+.connect-screen > section,
+.mint-screen > section {
+  overflow: hidden;
+  border: 1px solid var(--tgui--outline);
+  border-radius: 20px;
+  background: var(--tgui--section_bg_color);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--tgui--text_color, #111111) 6%, transparent);
+}
+
 .hero-panel {
   padding: 18px 16px 16px;
+  background: radial-gradient(
+    circle at 12% 0%,
+    color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 14%, transparent),
+    transparent 62%
+  );
+}
+
+.connect-generate {
+  border: 1px solid var(--tgui--outline);
+  border-radius: 20px;
+  background: var(--tgui--section_bg_color);
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--tgui--text_color, #111111) 6%, transparent);
 }
 
 .hero-title {
@@ -697,6 +786,13 @@
   white-space: nowrap;
 }
 
+.referral-link-row {
+  padding: 12px 14px;
+  border: 1px solid var(--tgui--outline);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--tgui--secondary_bg_color) 84%, var(--tgui--bg_color));
+}
+
 .referral-section-header {
   display: inline-flex;
   align-items: center;
@@ -711,8 +807,8 @@
 .referral-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 12px 16px 4px;
 }
 
 .referral-actions {
@@ -729,10 +825,11 @@
 
 .referral-stats-grid div {
   min-width: 0;
-  padding: 10px;
+  padding: 12px 10px;
   border: 1px solid var(--tgui--outline);
-  border-radius: 8px;
-  background: var(--tgui--secondary_bg_color);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--tgui--secondary_bg_color) 84%, var(--tgui--bg_color));
+  text-align: center;
   transition:
     transform 180ms ease,
     border-color 180ms ease,
@@ -774,7 +871,7 @@
   overflow-y: auto;
   padding: 18px;
   border: 1px solid color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 28%, var(--tgui--outline));
-  border-radius: 8px;
+  border-radius: 20px;
   background: var(--tgui--secondary_bg_color);
   color: var(--tgui--text_color);
   box-shadow: 0 20px 64px color-mix(in srgb, #000 42%, transparent);
@@ -787,7 +884,7 @@
   width: 48px;
   height: 48px;
   margin-bottom: 12px;
-  border-radius: 8px;
+  border-radius: 14px;
   background: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 18%, var(--tgui--bg_color));
   color: var(--tg-theme-button-color, #2ea6ff);
 }
@@ -819,7 +916,7 @@
 .referral-credit-list div {
   padding: 11px;
   border: 1px solid var(--tgui--outline);
-  border-radius: 8px;
+  border-radius: 14px;
   background: color-mix(in srgb, var(--tgui--bg_color) 54%, var(--tgui--secondary_bg_color));
 }
 
@@ -842,7 +939,7 @@
 
 .referral-modal-note {
   padding: 10px 11px;
-  border-radius: 8px;
+  border-radius: 14px;
   background: color-mix(in srgb, var(--tg-theme-button-color, #2ea6ff) 12%, var(--tgui--bg_color));
 }
 
@@ -1018,6 +1115,11 @@
 
   .referral-body {
     padding: 8px 10px;
+  }
+
+  .profile-header-card {
+    gap: 10px;
+    padding: 12px;
   }
 
   .screen .tgui-section {

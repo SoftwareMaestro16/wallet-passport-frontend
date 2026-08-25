@@ -2,10 +2,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Section, Cell, Button, Spinner } from "@telegram-apps/telegram-ui";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
+import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
 import { getTelegramInitData, hapticImpact, hapticNotification } from "../../app/telegram";
 import { api, ApiError } from "../../api/client";
 import { TestnetGuard } from "../../shared/TestnetGuard";
 import { buildMintTransactionRequest } from "./mintTx";
+import { useWalletPassports } from "../profile/useWalletPassports";
+import { PassportEligibility } from "./PassportEligibility";
 
 type MintState =
   | { status: "idle" }
@@ -31,7 +34,11 @@ function backendErrorMessage(err: unknown): string | undefined {
 
 export function MintScreen() {
   const { t } = useTranslation();
-  const { isConnected, tonConnectUI } = useTonConnectAccount();
+  const { isConnected, tonConnectUI, address } = useTonConnectAccount();
+  const { state: verifiedState } = useVerifiedProfile();
+  const walletPassports = useWalletPassports(
+    isConnected && verifiedState.status === "success" ? address : undefined,
+  );
   const [state, setState] = useState<MintState>({ status: "idle" });
   async function handleMint() {
     hapticImpact("medium");
@@ -45,6 +52,7 @@ export function MintScreen() {
 
       hapticNotification("success");
       setState({ status: "success", txHash: result.boc?.slice(0, 16) });
+      void walletPassports.reload();
     } catch (err) {
       // mintTx.ts can throw a non-ApiError (e.g. the Permit cell-overflow blocker documented
       // there) — surface it in devtools since `state.message` below is a generic i18n string.
@@ -63,6 +71,30 @@ export function MintScreen() {
       <Section header={t("mint.title")} footer={t("mint.description")} />
 
       <TestnetGuard />
+
+      {isConnected && verifiedState.status === "success" && walletPassports.state.status === "loading" && (
+        <Section>
+          <Cell before={<Spinner size="s" />}>{t("profile.loadingProfile")}</Cell>
+        </Section>
+      )}
+
+      {isConnected && verifiedState.status === "success" && walletPassports.state.status === "error" && (
+        <Section footer={t("profile.profileError")}>
+          <Cell
+            after={
+              <Button size="s" mode="outline" onClick={walletPassports.reload}>
+                {t("profile.retry")}
+              </Button>
+            }
+          >
+            {t("common.error")}
+          </Cell>
+        </Section>
+      )}
+
+      {isConnected && verifiedState.status === "success" && walletPassports.state.status === "ready" && (
+        <PassportEligibility categories={walletPassports.state.data.categories} t={t} />
+      )}
 
       <Section>
         {!isConnected && <Cell>{t("mint.notConnected")}</Cell>}

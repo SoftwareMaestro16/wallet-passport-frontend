@@ -32,29 +32,17 @@ function phaseToStepIndex(phase: string | undefined): number | null {
   return null;
 }
 
-function txFetchPct(job: ScanStatusResponse): number {
-  if (job.txTotal && job.txTotal > 0) {
-    return Math.min(100, (job.txFetched / job.txTotal) * 100);
-  }
-
-  if (job.txFetched > 0) {
-    return 15 + Math.min(55, job.txFetched * 2);
-  }
-
+/**
+ * The overall percentage itself is computed server-side (server/src/ingestion/scanProgress.ts)
+ * from real per-phase counters — the client used to re-derive it here with several hardcoded
+ * jumps (flat 78/90/97, an arbitrary `15 + fetched*2` formula) that didn't reflect real work
+ * done. `progressPercent` can still be briefly `undefined` on rollout (older server build) or
+ * for a job snapshot that predates the field; fall back to a small non-zero placeholder rather
+ * than a fabricated mid-range number.
+ */
+function overallRealProgressPct(job: ScanStatusResponse): number {
+  if (typeof job.progressPercent === "number") return job.progressPercent;
   return 2;
-}
-
-function overallRealProgressPct(job: ScanStatusResponse, stepIndex: number): number {
-  if (stepIndex === STEP.LOADING_TX) return Math.max(2, Math.round(txFetchPct(job) * 0.72));
-  if (stepIndex === STEP.ANALYZING_TRACES) {
-    if (job.txTotal && job.txTotal > 0) {
-      return 72 + Math.round((job.txFetched / job.txTotal) * 16);
-    }
-    return 78;
-  }
-  if (stepIndex === STEP.NFTS_TG) return 90;
-  if (stepIndex === STEP.SCORE) return 97;
-  return 8;
 }
 
 function progressDetail(job: ScanStatusResponse, stepIndex: number): Pick<ScanProgress, "detailKey" | "detailValues"> {
@@ -120,6 +108,11 @@ export function useScanProgress(address: string | undefined, active: boolean) {
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const skippedRef = useRef(false);
+  // The server derives progressPercent from live per-phase counters (see
+  // scanRunner.ts/scanProgress.ts) that aren't strictly guaranteed monotonic across two polls
+  // (e.g. a mainnet classification sub-phase can reset its own fetched/total pair mid-phase) —
+  // clamp client-side so the displayed bar itself never visibly moves backwards.
+  const maxPctRef = useRef(0);
 
   const clearPoll = () => {
     if (pollRef.current) {
@@ -133,6 +126,7 @@ export function useScanProgress(address: string | undefined, active: boolean) {
 
     setErrorMessage(undefined);
     skippedRef.current = false;
+    maxPctRef.current = 0;
     clearPoll();
     setProgress({
       stepIndex: STEP.LOADING_TX,
@@ -172,6 +166,7 @@ export function useScanProgress(address: string | undefined, active: boolean) {
 
         if (job.status === "DONE") {
           clearPoll();
+          maxPctRef.current = 100;
           setProgress({
             stepIndex: STEP.PREPARING,
             progressPct: 100,
@@ -184,9 +179,10 @@ export function useScanProgress(address: string | undefined, active: boolean) {
         }
 
         const stepIndex = phaseToStepIndex(job.phase) ?? fallbackStepIndex(job);
+        maxPctRef.current = Math.max(maxPctRef.current, overallRealProgressPct(job));
         setProgress({
           stepIndex,
-          progressPct: overallRealProgressPct(job, stepIndex),
+          progressPct: maxPctRef.current,
           done: false,
           failed: false,
           ...progressDetail(job, stepIndex),

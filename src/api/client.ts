@@ -109,7 +109,13 @@ export interface TelegramAuthResponse {
     photoUrl: string | null;
     isPremium: boolean;
     languageCode: string | null;
-    referralCode: string;
+    /**
+     * Always null here: referral codes now belong to a verified WalletBinding, not the Telegram
+     * account (see server/src/domain/referral.ts), and no wallet is bound yet at this point in
+     * the auth flow. Use `TonProofVerifyResponse.binding.referralCode` after wallet verify, or
+     * `GET /referrals/me` for the currently active wallet's code.
+     */
+    referralCode: string | null;
   };
   expiresAt: string;
   sessionToken: string;
@@ -139,6 +145,12 @@ export interface TonProofVerifyResponse {
     verifiedAt: string;
     proofExpiresAt: string;
     status: "ACTIVE" | "EXPIRED";
+    /**
+     * Deterministic per-wallet code (server/src/domain/referral.ts) — stable across
+     * re-verifications of THIS SAME wallet, different for every other wallet. Cache this (see
+     * shared/referral.ts) so the UI has a value before `GET /referrals/me` resolves.
+     */
+    referralCode: string;
   };
 }
 
@@ -228,6 +240,12 @@ export interface ScanStatusResponse {
    * reader of this field must treat `undefined` as "no phase signal", never as an error.
    */
   phase?: string;
+  /**
+   * Server-computed overall 0-100 percentage (see server/src/ingestion/scanProgress.ts) —
+   * derived from real per-phase counters, never fabricated client-side. Optional for the same
+   * rollout-safety reason as `phase`; treat `undefined` as "no signal yet", fall back to 0.
+   */
+  progressPercent?: number;
 }
 
 export type ScoreFactorCode = "A" | "C" | "E" | "O" | "D" | "N" | "S" | "B";
