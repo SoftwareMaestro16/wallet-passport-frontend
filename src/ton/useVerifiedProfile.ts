@@ -1,54 +1,67 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useIsConnectionRestored } from "@tonconnect/ui-react";
 import { useTonConnectAccount } from "./useTonConnectAccount";
 import { useTonProof } from "./useTonProof";
-import type { TonProofVerifyResponse } from "../api/client";
 
 export type VerifiedProfileState =
   | { status: "idle" }
   | { status: "verifying" }
-  | { status: "success"; data: TonProofVerifyResponse };
+  | { status: "success" };
 
 /**
- * Shared `ton_proof` verification gate. Any failure (backend unreachable, server rejected
- * the proof, or the wallet connected before a proof could be attached) simply disconnects
- * the wallet — the header's TonConnectButton then flips back to "Connect Wallet" and the
- * user retries with a fresh session. This replaces the earlier explicit error/backend-
- * unreachable/no-proof screens, which just told the user to reconnect anyway.
+ * Shared ton_proof verification gate.
+ *
+ * Critical ordering: on page load, TonConnect asynchronously restores a previously
+ * connected wallet (see `tonConnectUI.connectionRestored` in @tonconnect/ui). Until that
+ * promise resolves, `useTonWallet` may report empty or an intermediate state. Reacting to
+ * those transient states used to auto-disconnect the persisted wallet before restore
+ * finished — hence the "kicked out on every reload" bug. Every branch below gates on
+ * `isRestored` first.
+ *
+ * A restored connection has no fresh ton_proof (proofs are one-shot, only issued at
+ * connect time), and we can't retroactively obtain one. We treat a restored connection as
+ * verified for UI purposes so the address stays in the header and Scan/Mint stay enabled;
+ * the backend session cookie (`credentials: "include"`) set by the original verify still
+ * gates real API calls, so security isn't downgraded.
  */
 export function useVerifiedProfile() {
+  const isRestored = useIsConnectionRestored();
   const { isConnected, tonConnectUI } = useTonConnectAccount();
   const { verify, hasProof, payloadError } = useTonProof();
   const [state, setState] = useState<VerifiedProfileState>({ status: "idle" });
+  // True after we've decided what to do with the first wallet event of this session — used
+  // to distinguish "wallet just came back from restore" from "wallet just freshly connected".
+  const decidedRef = useRef(false);
 
   useEffect(() => {
+    if (!isRestored) return;
+
     if (!isConnected) {
-      // Wallet was disconnected (either by us on failure, or by the user) — reset state so a
-      // fresh connect starts from a clean slate rather than being blocked by stale success/verify.
       setState({ status: "idle" });
+      decidedRef.current = false;
       return;
     }
     if (state.status !== "idle") return;
 
-    if (payloadError) {
-      void tonConnectUI.disconnect();
-      return;
-    }
-    if (!hasProof) {
-      // Wallet connected before refreshPayload attached tonProof — this connection can never
-      // produce one. Disconnect so the user gets a fresh Connect button; the next connect
-      // (after payload is ready) will carry a valid proof.
-      void tonConnectUI.disconnect();
+    // A fresh connect after wallet restore finished should carry ton_proof. If the wallet
+    // is restored (no fresh proof) OR the backend was unreachable before connect, keep
+    // the connection but skip verify — the address stays visible, session cookie (if any)
+    // still gates backend calls.
+    if (!hasProof || payloadError) {
+      decidedRef.current = true;
+      setState({ status: "success" });
       return;
     }
 
+    decidedRef.current = true;
     setState({ status: "verifying" });
     verify()
-      .then((data) => setState({ status: "success", data }))
+      .then(() => setState({ status: "success" }))
       .catch(() => {
         void tonConnectUI.disconnect();
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConnected, hasProof, payloadError]);
+  }, [isRestored, isConnected, hasProof, payloadError]);
 
-  return { isConnected, hasProof, state };
+  return { isConnected: isRestored && isConnected, hasProof, state };
 }
