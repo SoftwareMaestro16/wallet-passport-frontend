@@ -61,7 +61,38 @@ export function getTelegramLanguageCode(): string | undefined {
 /** Raw initData string — sent to the backend for Telegram auth validation. Never parsed/trusted client-side. */
 export function getTelegramInitData(): string {
   try {
-    return WebApp.initData ?? "";
+    const value = WebApp.initData ?? "";
+    // TEMPORARY diagnostic — server sees this consistently empty in production despite
+    // window.Telegram.WebApp.initData showing real data when checked manually; need to see
+    // location.hash/sessionStorage/window.Telegram directly vs the @twa-dev/sdk WebApp import at
+    // the exact moment this fires. Remove once root-caused.
+    console.warn("[wp-diag] getTelegramInitData", {
+      sdkValue: value,
+      sdkLen: value.length,
+      locationHash: (() => {
+        try {
+          return location.hash;
+        } catch {
+          return "<error>";
+        }
+      })(),
+      sessionStorageInitParams: (() => {
+        try {
+          return sessionStorage.getItem("initParams");
+        } catch {
+          return "<error>";
+        }
+      })(),
+      windowTelegramWebAppInitData: (() => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return (window as any).Telegram?.WebApp?.initData;
+        } catch {
+          return "<error>";
+        }
+      })(),
+    });
+    return value;
   } catch {
     return "";
   }
