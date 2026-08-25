@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Section, Cell, Button, Spinner } from "@telegram-apps/telegram-ui";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
-import { getTelegramInitData } from "../../app/telegram";
+import { getTelegramInitData, hapticImpact, hapticNotification } from "../../app/telegram";
 import { api, ApiError } from "../../api/client";
 import { TestnetGuard } from "../../shared/TestnetGuard";
 import { buildMintTransactionRequest } from "./mintTx";
@@ -36,6 +36,7 @@ export function MintScreen() {
   const [refreshPrepared, setRefreshPrepared] = useState(false);
 
   async function handleMint() {
+    hapticImpact("medium");
     setState({ status: "preparing" });
     try {
       const prepared = await api.prepareMint(CATEGORY, getTelegramInitData());
@@ -44,6 +45,7 @@ export function MintScreen() {
       const tx = buildMintTransactionRequest(prepared);
       const result = await tonConnectUI.sendTransaction(tx);
 
+      hapticNotification("success");
       setState({ status: "success", txHash: result.boc?.slice(0, 16) });
     } catch (err) {
       // mintTx.ts can throw a non-ApiError (e.g. the Permit cell-overflow blocker documented
@@ -51,8 +53,14 @@ export function MintScreen() {
       if (!(err instanceof ApiError)) console.error(err);
       const detail = backendErrorMessage(err) ?? (err instanceof ApiError ? `(${err.status})` : undefined);
       const message = detail ? `${t("mint.statusError")} ${detail}` : t("mint.statusError");
+      hapticNotification("error");
       setState({ status: "error", message });
     }
+  }
+
+  function handleRefreshPrepare() {
+    hapticImpact("light");
+    setRefreshPrepared(true);
   }
 
   const isBusy = state.status === "preparing" || state.status === "pending";
@@ -107,7 +115,7 @@ export function MintScreen() {
             mode="outline"
             stretched
             disabled={!isConnected}
-            onClick={() => setRefreshPrepared(true)}
+            onClick={handleRefreshPrepare}
           >
             {t("mint.refresh.prepareButton")}
           </Button>

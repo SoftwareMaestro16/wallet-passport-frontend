@@ -5,6 +5,7 @@ import { Section, Cell, Button, Badge, Spinner } from "@telegram-apps/telegram-u
 import { ScoreBar } from "../../shared/ScoreBar";
 import { TestnetGuard } from "../../shared/TestnetGuard";
 import { buildReferralLink, getSavedReferralCode } from "../../shared/referral";
+import { hapticImpact, hapticSelection } from "../../app/telegram";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { useWalletProfile } from "../profile/useWalletProfile";
@@ -22,6 +23,16 @@ export function ConnectScreen() {
   const hasCompletedScan = walletProfileState.status === "ready";
   const referralCode = getSavedReferralCode();
   const referralLink = buildReferralLink(referralCode);
+
+  function handleScan() {
+    hapticImpact("medium");
+    navigate("/scanning");
+  }
+
+  function handleCopyReferral() {
+    hapticSelection();
+    void navigator.clipboard?.writeText(referralLink);
+  }
 
   return (
     <div className="screen connect-screen">
@@ -124,7 +135,7 @@ export function ConnectScreen() {
 
       {isConnected && state.status === "success" && (
         <div className="connect-generate">
-          <Button size="l" stretched onClick={() => navigate("/scanning")}>
+          <Button size="l" stretched onClick={handleScan}>
             {hasCompletedScan ? t("connect.updateButton") : t("connect.scanButton")}
           </Button>
           <Cell
@@ -153,7 +164,7 @@ export function ConnectScreen() {
               size="s"
               mode="outline"
               disabled={!referralCode}
-              onClick={() => void navigator.clipboard?.writeText(referralLink)}
+              onClick={handleCopyReferral}
             >
               {t("referral.copy")}
             </Button>

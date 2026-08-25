@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Section, Cell, Spinner, Progress, Caption, Button } from "@telegram-apps/telegram-ui";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
+import { hapticImpact, hapticNotification, hapticSelection } from "../../app/telegram";
 import { ScanIcon } from "../../shared/icons";
 import { useScanProgress, SCAN_STEP_COUNT } from "./useScanProgress";
 
@@ -11,6 +12,8 @@ export function ScanningScreen() {
   const navigate = useNavigate();
   const { isConnected, address } = useTonConnectAccount();
   const progress = useScanProgress(address || undefined, isConnected);
+  const didStartHaptic = useRef(false);
+  const didFinishHaptic = useRef(false);
 
   // Reached directly (deep link, back-forward cache) without a connected wallet — nothing to scan.
   useEffect(() => {
@@ -19,9 +22,25 @@ export function ScanningScreen() {
 
   useEffect(() => {
     if (!progress.done) return;
+    if (!didFinishHaptic.current) {
+      didFinishHaptic.current = true;
+      hapticNotification("success");
+    }
     const timeout = setTimeout(() => navigate("/profile", { replace: true }), 500);
     return () => clearTimeout(timeout);
   }, [progress.done, navigate]);
+
+  useEffect(() => {
+    if (!isConnected || didStartHaptic.current) return;
+    didStartHaptic.current = true;
+    hapticImpact("medium");
+  }, [isConnected]);
+
+  useEffect(() => {
+    if (!progress.failed || didFinishHaptic.current) return;
+    didFinishHaptic.current = true;
+    hapticNotification("error");
+  }, [progress.failed]);
 
   if (!isConnected) return null;
 
@@ -34,7 +53,15 @@ export function ScanningScreen() {
           <Cell
             multiline
             after={
-              <Button size="s" mode="outline" onClick={progress.retry}>
+              <Button
+                size="s"
+                mode="outline"
+                onClick={() => {
+                  didFinishHaptic.current = false;
+                  hapticImpact("light");
+                  progress.retry();
+                }}
+              >
                 {t("scanning.retry")}
               </Button>
             }
@@ -43,7 +70,15 @@ export function ScanningScreen() {
           </Cell>
         </Section>
 
-        <Button mode="plain" size="s" stretched onClick={() => navigate("/", { replace: true })}>
+        <Button
+          mode="plain"
+          size="s"
+          stretched
+          onClick={() => {
+            hapticSelection();
+            navigate("/", { replace: true });
+          }}
+        >
           {t("scanning.backToConnect")}
         </Button>
       </div>
@@ -72,7 +107,15 @@ export function ScanningScreen() {
         </div>
       </Section>
 
-      <Button mode="plain" size="s" stretched onClick={progress.skip}>
+      <Button
+        mode="plain"
+        size="s"
+        stretched
+        onClick={() => {
+          hapticSelection();
+          progress.skip();
+        }}
+      >
         {t("scanning.skip")}
       </Button>
     </div>

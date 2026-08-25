@@ -1,12 +1,13 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Section, Cell, Avatar, Spinner, Button, Badge } from "@telegram-apps/telegram-ui";
+import { Section, Cell, Avatar, Spinner, Button, Badge, Switch, IconButton } from "@telegram-apps/telegram-ui";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
 import { ScoreBar } from "../../shared/ScoreBar";
 import { TestnetGuard } from "../../shared/TestnetGuard";
-import { shareReferralViaInlineMode } from "../../app/telegram";
+import { hapticImpact, hapticSelection, shareReferralViaInlineMode } from "../../app/telegram";
+import { setLanguage } from "../../app/i18n";
 import { buildReferralLink, getSavedReferralCode } from "../../shared/referral";
 import { useWalletProfile } from "./useWalletProfile";
 import { useWalletPassports } from "./useWalletPassports";
@@ -27,6 +28,10 @@ const CATEGORY_LABEL_KEYS: Record<PassportCategoryName, string> = {
   staker: "profile.categories.staker",
   builder: "profile.categories.builder",
 };
+
+const PROFILE_THEME_STORAGE_KEY = "wallet-passport-profile-theme";
+
+type ProfileTheme = "light" | "dark";
 
 function localeFor(lang: string): string {
   return lang.startsWith("ru") ? "ru-RU" : "en-US";
@@ -66,17 +71,68 @@ function StatCell({ label, value }: { label: string; value: ReactNode }) {
   return <Cell subtitle={label}>{value}</Cell>;
 }
 
+function getInitialProfileTheme(): ProfileTheme {
+  try {
+    const stored = localStorage.getItem(PROFILE_THEME_STORAGE_KEY);
+    if (stored === "dark" || stored === "light") return stored;
+
+    const appRootTheme = document.querySelector<HTMLElement>(".app-root")?.dataset.scheme;
+    if (appRootTheme === "dark" || appRootTheme === "light") return appRootTheme;
+
+    const app = (window as any).Telegram?.WebApp;
+    const hex = app?.themeParams?.bg_color;
+    if (hex && hex.length >= 7) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5 ? "dark" : "light";
+    }
+
+    return app?.colorScheme === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+function applyProfileTheme(theme: ProfileTheme): void {
+  try {
+    localStorage.setItem(PROFILE_THEME_STORAGE_KEY, theme);
+  } catch {}
+
+  document.documentElement.setAttribute("data-wp-theme", theme);
+  const appRoot = document.querySelector<HTMLElement>(".app-root");
+  appRoot?.setAttribute("data-wp-theme", theme);
+  appRoot?.setAttribute("data-scheme", theme);
+  window.dispatchEvent(new Event("wallet-passport-theme-change"));
+}
+
+function InfoIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M12 10.8v5.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="12" cy="7.8" r="1.1" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const { address, tonConnectUI } = useTonConnectAccount();
   const { isConnected, state, retry } = useVerifiedProfile();
   const lang = i18n.language;
+  const currentLanguage = lang === "ru" ? "ru" : "en";
+  const [theme, setTheme] = useState<ProfileTheme>(getInitialProfileTheme);
 
   const walletProfile = useWalletProfile(state.status === "success" ? address : undefined);
   const walletPassports = useWalletPassports(state.status === "success" ? address : undefined);
   const referralMe = useReferralMe(state.status === "success");
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    applyProfileTheme(theme);
+  }, [theme]);
 
   if (!isConnected) {
     return (
@@ -108,6 +164,39 @@ export function ProfileScreen() {
         )}
         <Cell before={<Avatar size={40} acronym={acronymFor(address)} />} subtitle={t("profile.walletLabel")}>
           <span className="mono">{shortAddress(address)}</span>
+        </Cell>
+      </Section>
+
+      <Section header={t("profile.settings.title")}>
+        <Cell
+          subtitle={currentLanguage === "ru" ? t("profile.settings.languageRu") : t("profile.settings.languageEn")}
+          after={
+            <Switch
+              checked={currentLanguage === "ru"}
+              onChange={(event) => {
+                hapticSelection();
+                setLanguage(event.currentTarget.checked ? "ru" : "en");
+              }}
+              aria-label={t("profile.settings.language")}
+            />
+          }
+        >
+          {t("profile.settings.language")}
+        </Cell>
+        <Cell
+          subtitle={theme === "dark" ? t("profile.settings.themeDark") : t("profile.settings.themeLight")}
+          after={
+            <Switch
+              checked={theme === "dark"}
+              onChange={(event) => {
+                hapticSelection();
+                setTheme(event.currentTarget.checked ? "dark" : "light");
+              }}
+              aria-label={t("profile.settings.theme")}
+            />
+          }
+        >
+          {t("profile.settings.theme")}
         </Cell>
       </Section>
 
@@ -157,7 +246,14 @@ export function ProfileScreen() {
         <Section footer={t("profile.notScanned.body")}>
           <Cell
             after={
-              <Button size="s" mode="outline" onClick={() => navigate("/scanning")}>
+              <Button
+                size="s"
+                mode="outline"
+                onClick={() => {
+                  hapticImpact("medium");
+                  navigate("/scanning");
+                }}
+              >
                 {t("profile.notScanned.cta")}
               </Button>
             }
@@ -224,6 +320,18 @@ function ProfileResult({
   const referralLink =
     referralMe.state.status === "ready" ? referralMe.state.data.referral.link : buildReferralLink(referralCode);
   const referralStats = referralMe.state.status === "ready" ? referralMe.state.data.stats : null;
+  const [referralInfoOpen, setReferralInfoOpen] = useState(false);
+
+  function handleCopyReferral() {
+    hapticSelection();
+    void navigator.clipboard?.writeText(referralLink);
+  }
+
+  function handleShareReferral() {
+    hapticImpact("light");
+    if (!referralCode || shareReferralViaInlineMode(referralCode)) return;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}`, "_blank", "noopener,noreferrer");
+  }
 
   return (
     <>
@@ -357,7 +465,13 @@ function ProfileResult({
       <Section header={t("profile.actions.title")}>
         <Cell
           after={
-            <Button size="s" onClick={() => navigate("/mint")}>
+            <Button
+              size="s"
+              onClick={() => {
+                hapticSelection();
+                navigate("/mint");
+              }}
+            >
               {t("profile.actions.go")}
             </Button>
           }
@@ -383,7 +497,26 @@ function ProfileResult({
         </Cell>
       </Section>
 
-      <Section header={t("referral.title")} footer={t("referral.footer")}>
+      <Section
+        header={
+          <span className="referral-section-header">
+            <span>{t("referral.title")}</span>
+            <IconButton
+              size="s"
+              mode="plain"
+              className="referral-info-button"
+              onClick={() => {
+                hapticSelection();
+                setReferralInfoOpen(true);
+              }}
+              aria-label={t("referral.info.open")}
+            >
+              <InfoIcon />
+            </IconButton>
+          </span>
+        }
+        footer={t("referral.footer")}
+      >
         <Cell
           multiline
           subtitle={<span className="mono referral-link">{referralLink}</span>}
@@ -393,17 +526,14 @@ function ProfileResult({
                 size="s"
                 mode="outline"
                 disabled={!referralCode}
-                onClick={() => void navigator.clipboard?.writeText(referralLink)}
+                onClick={handleCopyReferral}
               >
                 {t("referral.copy")}
               </Button>
               <Button
                 size="s"
                 disabled={!referralCode}
-                onClick={() => {
-                  if (!referralCode || shareReferralViaInlineMode(referralCode)) return;
-                  window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}`, "_blank", "noopener,noreferrer");
-                }}
+                onClick={handleShareReferral}
               >
                 {t("referral.shareInline")}
               </Button>
@@ -429,6 +559,58 @@ function ProfileResult({
           </div>
         )}
       </Section>
+
+      {referralInfoOpen && (
+        <div className="referral-modal-backdrop" role="presentation" onClick={() => setReferralInfoOpen(false)}>
+          <div
+            className="referral-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="referral-info-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="referral-modal-icon">
+              <InfoIcon size={28} />
+            </div>
+            <h2 id="referral-info-title">{t("referral.info.title")}</h2>
+            <p>{t("referral.info.body")}</p>
+            <div className="referral-credit-list">
+              <div>
+                <strong>{t("referral.info.inviter.title")}</strong>
+                <span>{t("referral.info.inviter.body")}</span>
+              </div>
+              <div>
+                <strong>{t("referral.info.invited.title")}</strong>
+                <span>{t("referral.info.invited.body")}</span>
+              </div>
+              <div>
+                <strong>{t("referral.info.scanned.title")}</strong>
+                <span>{t("referral.info.scanned.body")}</span>
+              </div>
+            </div>
+            <p className="referral-modal-note">{t("referral.info.reputationNote")}</p>
+            <div className="referral-modal-actions">
+              <Button mode="outline" size="s" stretched disabled={!referralCode} onClick={handleCopyReferral}>
+                {t("referral.copy")}
+              </Button>
+              <Button size="s" stretched disabled={!referralCode} onClick={handleShareReferral}>
+                {t("referral.shareInline")}
+              </Button>
+            </div>
+            <Button
+              mode="plain"
+              size="s"
+              stretched
+              onClick={() => {
+                hapticSelection();
+                setReferralInfoOpen(false);
+              }}
+            >
+              {t("referral.info.close")}
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

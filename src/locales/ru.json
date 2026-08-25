@@ -70,6 +70,15 @@
       "ru": "Русский интерфейс Telegram",
       "en": "English Telegram UI"
     },
+    "settings": {
+      "title": "Настройки",
+      "language": "Язык",
+      "languageRu": "Русский",
+      "languageEn": "English",
+      "theme": "Тема",
+      "themeLight": "Светлая",
+      "themeDark": "Тёмная"
+    },
     "disconnect": "Отключить",
     "loadingProfile": "Загружаем профиль кошелька...",
     "profileError": "Не удалось загрузить профиль кошелька.",
@@ -210,6 +219,12 @@
   "testnetGuard": {
     "warning": "Кошелёк подключён к mainnet. Переключите кошелёк в тестовую сеть (testnet), чтобы пользоваться Wallet Passport (testnet MVP)."
   },
+  "telegramOnly": {
+    "title": "Откройте Wallet Passport в Telegram",
+    "body": "Это Telegram Mini App. В обычном браузере доступны только эта страница и ссылка для открытия приложения.",
+    "openButton": "Открыть в Telegram",
+    "hint": "Если Telegram уже установлен, ссылка откроет Mini App внутри клиента."
+  },
   "nav": {
     "menu": "Главное меню",
     "connect": "Кошелёк",
@@ -227,6 +242,25 @@
     "connectToGet": "Подключите кошелёк, чтобы получить referral code",
     "copy": "Копировать",
     "shareInline": "Поделиться",
+    "info": {
+      "open": "Как работает рефералка",
+      "title": "Как работает рефералка",
+      "body": "Реферальная ссылка фиксирует путь приглашённого пользователя внутри Wallet Passport: открытие, подключение кошелька и первый scan.",
+      "inviter": {
+        "title": "Что получает приглашающий",
+        "body": "В профиле готовятся invited, connected и scanned credits: сколько людей пришли по ссылке, подключили кошелёк и сделали scan."
+      },
+      "invited": {
+        "title": "Что получает приглашённый",
+        "body": "Приглашённый сразу попадает в нужный Mini App flow и может подключить кошелёк без ручного ввода кода."
+      },
+      "scanned": {
+        "title": "Когда засчитывается scan",
+        "body": "Scan считается только после завершённой проверки кошелька. Повторные обновления паспорта будут учитываться отдельно."
+      },
+      "reputationNote": "Рефералка не накручивает Score: она не меняет reputation, категории Passport или редкость NFT.",
+      "close": "Понятно"
+    },
     "stats": {
       "invited": "приглашены",
       "walletConnected": "подключили кошелёк",

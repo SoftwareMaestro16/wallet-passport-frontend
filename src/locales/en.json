@@ -70,6 +70,15 @@
       "ru": "Russian Telegram UI",
       "en": "English Telegram UI"
     },
+    "settings": {
+      "title": "Settings",
+      "language": "Language",
+      "languageRu": "Russian",
+      "languageEn": "English",
+      "theme": "Theme",
+      "themeLight": "Light",
+      "themeDark": "Dark"
+    },
     "disconnect": "Disconnect",
     "loadingProfile": "Loading your wallet profile...",
     "profileError": "Could not load your wallet profile.",
@@ -208,6 +217,12 @@
   "testnetGuard": {
     "warning": "Wallet is connected to mainnet. Switch your wallet to testnet to use Wallet Passport (testnet MVP)."
   },
+  "telegramOnly": {
+    "title": "Open Wallet Passport in Telegram",
+    "body": "This is a Telegram Mini App. In a regular browser, only this page and the Telegram launch link are available.",
+    "openButton": "Open in Telegram",
+    "hint": "If Telegram is installed, the link will open the Mini App inside the client."
+  },
   "nav": {
     "menu": "Main menu",
     "connect": "Wallet",
@@ -225,6 +240,25 @@
     "connectToGet": "Connect your wallet to receive a referral code",
     "copy": "Copy",
     "shareInline": "Share",
+    "info": {
+      "open": "How referrals work",
+      "title": "How referrals work",
+      "body": "A referral link tracks the invited user's Wallet Passport path: app open, wallet connection, and first scan.",
+      "inviter": {
+        "title": "For the inviter",
+        "body": "Your profile prepares invited, connected, and scanned credits: who joined through your link, connected a wallet, and completed a scan."
+      },
+      "invited": {
+        "title": "For the invited user",
+        "body": "The invited user lands directly in the Mini App flow and can connect a wallet without entering a code."
+      },
+      "scanned": {
+        "title": "When a scan counts",
+        "body": "A scan counts only after wallet analysis finishes. Later passport refreshes can be tracked separately."
+      },
+      "reputationNote": "Referrals do not farm Score: they do not change reputation, Passport categories, or NFT rarity.",
+      "close": "Got it"
+    },
     "stats": {
       "invited": "invited",
       "walletConnected": "connected wallet",

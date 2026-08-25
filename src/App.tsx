@@ -1,17 +1,17 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppRoot, Button, Tabbar } from "@telegram-apps/telegram-ui";
 import { TonConnectProvider } from "./ton/TonConnectProvider";
-import { LanguageSwitcher } from "./shared/LanguageSwitcher";
 import { WalletIcon, ProfileIcon, MintIcon } from "./shared/icons";
 import { ConnectScreen } from "./features/connect/ConnectScreen";
 import { ScanningScreen } from "./features/scanning/ScanningScreen";
 import { ProfileScreen } from "./features/profile/ProfileScreen";
 import { MintScreen } from "./features/mint/MintScreen";
-import { useTelegramAppearance, useTelegramMainButton } from "./app/telegram";
+import { hapticImpact, isTelegramMiniApp, useTelegramAppearance, useTelegramMainButton } from "./app/telegram";
 import { useTonConnectAccount } from "./ton/useTonConnectAccount";
 import { useVerifiedProfile } from "./ton/useVerifiedProfile";
+import { TelegramOnlyGate } from "./shared/TelegramOnlyGate";
 import "@telegram-apps/telegram-ui/dist/styles.css";
 import "./App.css";
 
@@ -54,12 +54,31 @@ function Nav() {
   );
 }
 
+function shortHeaderAddress(address: string): string {
+  if (!address) return "";
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
+}
+
+const PROFILE_THEME_STORAGE_KEY = "wallet-passport-profile-theme";
+
+type AppTheme = "light" | "dark";
+
+function readStoredTheme(fallback: AppTheme): AppTheme {
+  try {
+    const stored = localStorage.getItem(PROFILE_THEME_STORAGE_KEY);
+    return stored === "light" || stored === "dark" ? stored : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function AppShell() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { isConnected } = useTonConnectAccount();
+  const { address, isConnected, tonConnectUI } = useTonConnectAccount();
   const { state } = useVerifiedProfile();
+  const headerTitle = t("connect.title").replace(/^Wallet\s+/u, "");
   // Scanning is a focused, transient step (per TON_Relics spec §23) — hiding the tab bar there
   // keeps the user from bailing into Mint/Profile mid-scan instead of watching it finish.
   const showNav = pathname !== "/scanning";
@@ -68,8 +87,19 @@ function AppShell() {
 
   const handleMainButtonClick = useCallback(() => {
     if (!canScan || scanInProgress) return;
+    hapticImpact("medium");
     navigate("/scanning");
   }, [canScan, navigate, scanInProgress]);
+
+  const handleWalletClick = useCallback(() => {
+    hapticImpact("light");
+    if (isConnected) {
+      void tonConnectUI.disconnect();
+      return;
+    }
+
+    void tonConnectUI.openModal();
+  }, [isConnected, tonConnectUI]);
 
   useTelegramMainButton({
     text: scanInProgress ? t("mainButton.scanning") : t("mainButton.scan"),
@@ -82,12 +112,26 @@ function AppShell() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div className="app-brand">
-          <span className="app-brand-mark">WP</span>
-          <span>Wallet Passport</span>
+        <div className="app-header-main">
+          <div className="app-brand" aria-label={t("connect.title")}>
+            <span>{headerTitle}</span>
+          </div>
+          <button
+            type="button"
+            className="app-tonconnect-button"
+            onClick={handleWalletClick}
+            aria-label={isConnected ? t("profile.disconnect") : t("connect.connectButton")}
+            title={isConnected ? t("profile.disconnect") : t("connect.connectButton")}
+          >
+            <span className="app-tonconnect-icon" aria-hidden="true">
+              TON
+            </span>
+            <span className="app-tonconnect-label">
+              {isConnected ? shortHeaderAddress(address) : t("connect.connectButton")}
+            </span>
+          </button>
         </div>
         {showNav && <Nav />}
-        <LanguageSwitcher />
       </header>
 
       <main id="scroll-area" className="app-main">
@@ -106,24 +150,46 @@ function AppShell() {
 
 export default function App() {
   const { platform, appearance } = useTelegramAppearance();
+  const isTelegram = isTelegramMiniApp();
+  const [theme, setTheme] = useState<AppTheme>(() => readStoredTheme(appearance));
+
+  useEffect(() => {
+    const handleThemeChange = () => setTheme(readStoredTheme(appearance));
+    window.addEventListener("wallet-passport-theme-change", handleThemeChange);
+    window.addEventListener("storage", handleThemeChange);
+    return () => {
+      window.removeEventListener("wallet-passport-theme-change", handleThemeChange);
+      window.removeEventListener("storage", handleThemeChange);
+    };
+  }, [appearance]);
 
   return (
-    <AppRoot platform={platform} appearance={appearance} data-scheme={appearance} className="app-root">
-      <TonConnectProvider>
-        {/*
-          Telegram Desktop delivers launch params (initData, platform, theme) as a URL hash
-          fragment (`#tgWebAppData=...&tgWebAppPlatform=tdesktop&...`) -- @twa-dev/sdk reads this
-          exactly once, synchronously, at module-evaluation time, and never re-reads it. A
-          HashRouter here fights over the same `location.hash` for its own routing and can mangle
-          it before/after that one read, which is exactly what caused every request to see a
-          permanently empty initData in production regardless of retries. This app never needs
-          shareable/bookmarkable sub-URLs, so MemoryRouter (no window.location interaction at all)
-          removes the conflict entirely rather than trying to sequence around it.
-        */}
-        <MemoryRouter>
-          <AppShell />
-        </MemoryRouter>
-      </TonConnectProvider>
+    <AppRoot
+      platform={platform}
+      appearance={theme}
+      data-scheme={theme}
+      data-wp-theme={theme}
+      className="app-root"
+    >
+      {!isTelegram ? (
+        <TelegramOnlyGate />
+      ) : (
+        <TonConnectProvider>
+          {/*
+            Telegram Desktop delivers launch params (initData, platform, theme) as a URL hash
+            fragment (`#tgWebAppData=...&tgWebAppPlatform=tdesktop&...`) -- @twa-dev/sdk reads this
+            exactly once, synchronously, at module-evaluation time, and never re-reads it. A
+            HashRouter here fights over the same `location.hash` for its own routing and can mangle
+            it before/after that one read, which is exactly what caused every request to see a
+            permanently empty initData in production regardless of retries. This app never needs
+            shareable/bookmarkable sub-URLs, so MemoryRouter (no window.location interaction at all)
+            removes the conflict entirely rather than trying to sequence around it.
+          */}
+          <MemoryRouter>
+            <AppShell />
+          </MemoryRouter>
+        </TonConnectProvider>
+      )}
     </AppRoot>
   );
 }

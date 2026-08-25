@@ -19,6 +19,22 @@ function rawWebApp(): any {
 
 const DESKTOP_PLATFORMS = new Set(["tdesktop", "macos"]);
 
+function hasTelegramLaunchParams(): boolean {
+  const sources = [window.location.hash.replace(/^#/, ""), window.location.search.replace(/^\?/, "")];
+  return sources.some((source) => {
+    const params = new URLSearchParams(source);
+    return Boolean(params.get("tgWebAppData"));
+  });
+}
+
+export function isTelegramMiniApp(): boolean {
+  try {
+    return Boolean(rawWebApp()?.initData || hasTelegramLaunchParams());
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Thin wrapper around @twa-dev/sdk's WebApp singleton — still used for method calls
  * (ready/expand/onEvent) which work correctly; only property reads are suspect (see `rawWebApp`).
@@ -135,6 +151,56 @@ export function shareReferralViaInlineMode(referralCode: string): boolean {
     return false;
   }
   return false;
+}
+
+type HapticImpactStyle = "light" | "medium" | "heavy" | "rigid" | "soft";
+type HapticNotificationType = "error" | "success" | "warning";
+
+function vibrateFallback(pattern: VibratePattern): void {
+  try {
+    navigator.vibrate?.(pattern);
+  } catch {
+    // no-op on browsers/clients without vibration support
+  }
+}
+
+export function hapticImpact(style: HapticImpactStyle = "light"): void {
+  const app = rawWebApp();
+  try {
+    if (app?.HapticFeedback?.impactOccurred) {
+      app.HapticFeedback.impactOccurred(style);
+      return;
+    }
+  } catch {
+    // fall through to browser vibration
+  }
+  vibrateFallback(style === "heavy" ? 18 : 10);
+}
+
+export function hapticSelection(): void {
+  const app = rawWebApp();
+  try {
+    if (app?.HapticFeedback?.selectionChanged) {
+      app.HapticFeedback.selectionChanged();
+      return;
+    }
+  } catch {
+    // fall through to browser vibration
+  }
+  vibrateFallback(8);
+}
+
+export function hapticNotification(type: HapticNotificationType): void {
+  const app = rawWebApp();
+  try {
+    if (app?.HapticFeedback?.notificationOccurred) {
+      app.HapticFeedback.notificationOccurred(type);
+      return;
+    }
+  } catch {
+    // fall through to browser vibration
+  }
+  vibrateFallback(type === "error" ? [12, 24, 12] : 16);
 }
 
 /**
