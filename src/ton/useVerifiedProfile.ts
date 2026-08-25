@@ -6,62 +6,49 @@ import type { TonProofVerifyResponse } from "../api/client";
 export type VerifiedProfileState =
   | { status: "idle" }
   | { status: "verifying" }
-  | { status: "success"; data: TonProofVerifyResponse }
-  | { status: "error" }
-  // The backend couldn't be reached to even issue a ton_proof challenge (wrong API base URL,
-  // server down) — distinct from "error" (a completed-but-rejected verification), since here
-  // the wallet connected with no proof attached at all and retry must re-fetch the payload
-  // before the *next* connect, not just re-run verify() against the same (proof-less) wallet.
-  | { status: "backend-unreachable" }
-  // The wallet connected before `refreshPayload()`'s async chain (telegramAuth + payload fetch)
-  // finished attaching `tonProof` to `setConnectRequestParameters` — TonConnect only attaches
-  // `connectItems.tonProof` at connect time, never retroactively, so this connection can never
-  // produce a proof; the only fix is disconnecting and reconnecting once a fresh payload is
-  // ready. Previously this silently left `state` stuck at "idle" forever with no feedback.
-  | { status: "no-proof" };
+  | { status: "success"; data: TonProofVerifyResponse };
 
 /**
- * Shared `ton_proof` verification gate — Connect uses it to decide when the "Generate" action
- * unlocks, Profile uses it to render the result. Wraps `useTonProof` (never touch that hook's
- * logic) so both screens share one verify-on-connect flow instead of diverging over time.
+ * Shared `ton_proof` verification gate. Any failure (backend unreachable, server rejected
+ * the proof, or the wallet connected before a proof could be attached) simply disconnects
+ * the wallet — the header's TonConnectButton then flips back to "Connect Wallet" and the
+ * user retries with a fresh session. This replaces the earlier explicit error/backend-
+ * unreachable/no-proof screens, which just told the user to reconnect anyway.
  */
 export function useVerifiedProfile() {
   const { isConnected, tonConnectUI } = useTonConnectAccount();
-  const { verify, hasProof, payloadError, refreshPayload } = useTonProof();
+  const { verify, hasProof, payloadError } = useTonProof();
   const [state, setState] = useState<VerifiedProfileState>({ status: "idle" });
 
   useEffect(() => {
-    if (!isConnected || state.status !== "idle") return;
+    if (!isConnected) {
+      // Wallet was disconnected (either by us on failure, or by the user) — reset state so a
+      // fresh connect starts from a clean slate rather than being blocked by stale success/verify.
+      setState({ status: "idle" });
+      return;
+    }
+    if (state.status !== "idle") return;
 
     if (payloadError) {
-      setState({ status: "backend-unreachable" });
+      void tonConnectUI.disconnect();
       return;
     }
     if (!hasProof) {
-      setState({ status: "no-proof" });
+      // Wallet connected before refreshPayload attached tonProof — this connection can never
+      // produce one. Disconnect so the user gets a fresh Connect button; the next connect
+      // (after payload is ready) will carry a valid proof.
+      void tonConnectUI.disconnect();
       return;
     }
 
     setState({ status: "verifying" });
     verify()
       .then((data) => setState({ status: "success", data }))
-      .catch(() => setState({ status: "error" }));
+      .catch(() => {
+        void tonConnectUI.disconnect();
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, hasProof, payloadError]);
 
-  return {
-    isConnected,
-    hasProof,
-    state,
-    retry: () => {
-      void refreshPayload();
-      setState({ status: "idle" });
-    },
-    reconnect: async () => {
-      await tonConnectUI.disconnect();
-      await refreshPayload();
-      setState({ status: "idle" });
-      void tonConnectUI.openModal();
-    },
-  };
+  return { isConnected, hasProof, state };
 }

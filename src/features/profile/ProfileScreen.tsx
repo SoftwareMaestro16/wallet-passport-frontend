@@ -118,7 +118,7 @@ function applyProfileTheme(theme: ProfileTheme): void {
 export function ProfileScreen() {
   const { t, i18n } = useTranslation();
   const { address } = useTonConnectAccount();
-  const { isConnected, state, retry, reconnect } = useVerifiedProfile();
+  const { isConnected, state } = useVerifiedProfile();
   const lang = i18n.language;
   const currentLanguage = lang === "ru" ? "ru" : "en";
   const [theme, setTheme] = useState<ProfileTheme>(getInitialProfileTheme);
@@ -239,48 +239,6 @@ export function ProfileScreen() {
       {state.status === "verifying" && (
         <Section>
           <Cell before={<Spinner size="s" />}>{t("profile.verifying")}</Cell>
-        </Section>
-      )}
-
-      {state.status === "error" && (
-        <Section footer={t("profile.verifyError")}>
-          <Cell
-            after={
-              <Button size="s" mode="outline" onClick={retry}>
-                {t("profile.retry")}
-              </Button>
-            }
-          >
-            {t("common.error")}
-          </Cell>
-        </Section>
-      )}
-
-      {state.status === "no-proof" && (
-        <Section footer={t("profile.noProofHint")}>
-          <Cell
-            after={
-              <Button size="s" mode="outline" onClick={reconnect}>
-                {t("profile.reconnect")}
-              </Button>
-            }
-          >
-            {t("profile.noProof")}
-          </Cell>
-        </Section>
-      )}
-
-      {state.status === "backend-unreachable" && (
-        <Section footer={t("profile.backendUnreachable")}>
-          <Cell
-            after={
-              <Button size="s" mode="outline" onClick={retry}>
-                {t("profile.retry")}
-              </Button>
-            }
-          >
-            {t("common.error")}
-          </Cell>
         </Section>
       )}
 

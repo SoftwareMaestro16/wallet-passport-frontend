@@ -9,10 +9,8 @@ import { useWalletProfile } from "../profile/useWalletProfile";
 export function ConnectScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isConnected, state, retry, reconnect } = useVerifiedProfile();
+  const { isConnected, state } = useVerifiedProfile();
   const { address } = useTonConnectAccount();
-  // Only matters once ton_proof has verified this wallet — a completed scan for THIS address
-  // (200) flips the button to "Update Passport"; no scan yet (409) or unknown keeps "Scan Wallet".
   const { state: walletProfileState } = useWalletProfile(
     isConnected && state.status === "success" ? address : undefined,
   );
@@ -42,48 +40,6 @@ export function ConnectScreen() {
       {isConnected && state.status === "verifying" && (
         <Section>
           <Cell before={<Spinner size="s" />}>{t("profile.verifying")}</Cell>
-        </Section>
-      )}
-
-      {isConnected && state.status === "no-proof" && (
-        <Section footer={t("profile.noProofHint")}>
-          <Cell
-            after={
-              <Button size="s" mode="outline" onClick={reconnect}>
-                {t("profile.reconnect")}
-              </Button>
-            }
-          >
-            {t("profile.noProof")}
-          </Cell>
-        </Section>
-      )}
-
-      {isConnected && state.status === "backend-unreachable" && (
-        <Section footer={t("profile.backendUnreachable")}>
-          <Cell
-            after={
-              <Button size="s" mode="outline" onClick={retry}>
-                {t("profile.retry")}
-              </Button>
-            }
-          >
-            {t("common.error")}
-          </Cell>
-        </Section>
-      )}
-
-      {isConnected && state.status === "error" && (
-        <Section footer={t("profile.verifyError")}>
-          <Cell
-            after={
-              <Button size="s" mode="outline" onClick={retry}>
-                {t("profile.retry")}
-              </Button>
-            }
-          >
-            {t("common.error")}
-          </Cell>
         </Section>
       )}
 
