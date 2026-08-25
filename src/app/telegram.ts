@@ -67,6 +67,25 @@ export function getTelegramInitData(): string {
   }
 }
 
+/**
+ * `WebApp.initData` is empty for a beat after mount on at least one real client (Telegram
+ * Desktop): the SDK script executes synchronously, but the native shell hands over `initData`
+ * through an async postMessage handshake (visible as `[Telegram.WebView] > postEvent ...` in that
+ * client's console) that hasn't necessarily resolved by the time our own module script runs —
+ * confirmed in production, requests fired at mount-time synchronously read `initData: ""` and got
+ * rejected, while re-reading it a moment later (manually, in devtools) returned a full valid
+ * string. Poll briefly instead of trusting the very first synchronous read.
+ */
+export async function waitForTelegramInitData(timeoutMs = 3000, intervalMs = 100): Promise<string> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const initData = getTelegramInitData();
+    if (initData) return initData;
+    if (Date.now() >= deadline) return "";
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+}
+
 function resolvePlatform(): "ios" | "base" {
   try {
     // telegram-ui's AppRoot only distinguishes "ios" vs "base" (everything else renders the

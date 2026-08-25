@@ -53,12 +53,27 @@ export function buildMintTransactionRequest(prepared: MintPrepareResponse) {
  * contracts/DESIGN.md §10: the contract enforces `msg.value >= permit.mintPrice +
  * permit.itemReserve`, plus `permit.referralReward` when there's a referrer (paid out of the
  * same incoming value, not on top of it — see the §10 worked example: 0.300 TON in =
- * 0.040 itemReserve + 0.020 referralReward + rest as mintPrice/revenue/fees). The permit is
- * backend-signed and already includes headroom for network fees, so we send exactly
- * mintPrice + itemReserve + referralReward and nothing else — never a hardcoded placeholder.
+ * 0.040 itemReserve + 0.020 referralReward + rest as mintPrice/revenue/fees).
+ *
+ * `msg.value` as SEEN BY THE CONTRACT is the wallet's outgoing amount MINUS the TON forward fee
+ * for that hop — confirmed empirically against the real deployed testnet collection (a
+ * TonConnect-style send of exactly `mintPrice + itemReserve` bounced with `Errors.NotEnoughFunds`
+ * (428) because ~0.0009 TON of forward fee was deducted in transit, leaving slightly less than
+ * the signed minimum). The permit's signed amounts do NOT include this headroom (they're the
+ * exact figures the Collection's business logic checks against), so the client must add a small
+ * fixed buffer on top — safe because the contract only checks `>=`, never `==`; any leftover
+ * simply becomes extra Collection balance, never refunded but never rejected either.
  */
+const NETWORK_FEE_HEADROOM_NANOTON = 20_000_000n; // 0.02 TON, matches DESIGN.md §10's own
+// "~0.01-0.02 TON network fees" estimate — comfortably above the ~0.0009 TON measured in practice
+
 function computeMintAmount(permit: MintPermit): bigint {
-  return BigInt(permit.mintPrice) + BigInt(permit.itemReserve) + BigInt(permit.referralReward);
+  return (
+    BigInt(permit.mintPrice) +
+    BigInt(permit.itemReserve) +
+    BigInt(permit.referralReward) +
+    NETWORK_FEE_HEADROOM_NANOTON
+  );
 }
 
 function buildMintOrRefreshCell(prepared: MintPrepareResponse) {

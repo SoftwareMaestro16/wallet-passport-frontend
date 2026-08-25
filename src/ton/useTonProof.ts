@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import type { TonProofItemReplySuccess } from "@tonconnect/ui-react";
 import { api } from "../api/client";
-import { getTelegramInitData } from "../app/telegram";
+import { getTelegramInitData, waitForTelegramInitData } from "../app/telegram";
 
 /**
  * Implements the TonConnect `ton_proof` request/response dance described in
@@ -31,9 +31,12 @@ export function useTonProof() {
       // verifyTonProof requires an existing session cookie (server/src/http/routes/auth.ts) that
       // only this call issues — must happen before the wallet ever reaches verify(), so it's
       // bundled into the same mount-time effect that fetches the proof payload rather than a
-      // separate step that could race with connecting.
-      await api.telegramAuth(getTelegramInitData());
-      const { payload } = await api.getTonProofPayload(getTelegramInitData());
+      // separate step that could race with connecting. `waitForTelegramInitData` matters here:
+      // on at least one real client `initData` reads empty for a beat right at mount (see its
+      // doc comment) — this ran at mount before, so it hit that empty window every time.
+      const initData = await waitForTelegramInitData();
+      await api.telegramAuth(initData);
+      const { payload } = await api.getTonProofPayload(initData);
       payloadRef.current = payload;
       tonConnectUI.setConnectRequestParameters({ state: "ready", value: { tonProof: payload } });
     } catch {
