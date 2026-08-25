@@ -880,6 +880,25 @@
   padding: 24px 16px 20px;
 }
 
+.scanning-progress-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.scanning-progress-value {
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 800;
+  color: var(--tgui--text_color);
+}
+
+.scanning-progress-copy {
+  text-align: center;
+  color: var(--tgui--hint_color);
+}
+
 .scanning-step {
   text-align: center;
   color: var(--tgui--subtitle_text_color);

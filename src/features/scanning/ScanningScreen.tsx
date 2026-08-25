@@ -45,6 +45,8 @@ export function ScanningScreen() {
   if (!isConnected) return null;
 
   const stepLabels = Array.from({ length: SCAN_STEP_COUNT }, (_, i) => t(`scanning.steps.${i}`));
+  const progressPercent = Math.max(0, Math.min(100, Math.round(progress.progressPct)));
+  const progressDetail = t(progress.detailKey, progress.detailValues);
 
   if (progress.failed) {
     return (
@@ -100,9 +102,15 @@ export function ScanningScreen() {
       >
         <div className="scanning-body">
           <Spinner size="l" />
+          <div className="scanning-progress-head">
+            <strong className="scanning-progress-value">{t("scanning.progressPct", { percent: progressPercent })}</strong>
+          </div>
           <Progress value={progress.progressPct} />
           <Caption level="1" weight="2" className="scanning-step">
             {stepLabels[progress.stepIndex]}
+          </Caption>
+          <Caption level="1" weight="2" className="scanning-progress-copy">
+            {progressDetail}
           </Caption>
         </div>
       </Section>

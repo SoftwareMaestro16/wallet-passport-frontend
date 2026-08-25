@@ -32,6 +32,16 @@
   "scanning": {
     "title": "Analyzing your wallet",
     "subtitle": "This takes 1-2 minutes — we're reconstructing your full on-chain history.",
+    "progressPct": "{{percent}}%",
+    "progress": {
+      "starting": "Starting the scan and requesting wallet history.",
+      "loadedOfTotal": "Loaded {{loaded}} of {{total}} transactions.",
+      "loaded": "Loaded {{loaded}} transactions.",
+      "canonicalizing": "Parsing and storing {{loaded}} transactions. New since the previous scan: {{new}}.",
+      "auxiliary": "Loading auxiliary data and linking it to {{loaded}} transactions. New: {{new}}.",
+      "metrics": "Computing wallet metrics and Wallet Score from {{loaded}} transactions. New: {{new}}.",
+      "done": "Scan finished. Opening the profile."
+    },
     "steps": {
       "0": "Loading transactions...",
       "1": "Analyzing traces...",
