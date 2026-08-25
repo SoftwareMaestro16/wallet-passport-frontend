@@ -186,7 +186,7 @@ export function useTelegramMainButton(options: {
   }, [text, visible, loading, disabled, onClick]);
 }
 
-export function shareReferralViaInlineMode(referralCode: string): boolean {
+export function shareReferralViaInlineMode(_referralCode: string): boolean {
   const app = rawWebApp();
   try {
     if (app?.switchInlineQuery) {

@@ -798,14 +798,6 @@ function PassportCategoryTile({
   );
 }
 
-function shortAddress(address: string): string {
-  if (!address) return "";
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-
-function acronymFor(address: string): string {
-  return address ? address.slice(2, 4).toUpperCase() : "??";
-}
 
 function displayUserName(firstName: string | null, lastName: string | null, username: string | null): string {
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
