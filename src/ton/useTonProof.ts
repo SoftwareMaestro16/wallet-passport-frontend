@@ -1,8 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTonConnectUI, useTonWallet } from "@tonconnect/ui-react";
 import type { TonProofItemReplySuccess } from "@tonconnect/ui-react";
-import { api } from "../api/client";
+import { api, type TonProofVerifyResponse } from "../api/client";
 import { getTelegramInitData, waitForTelegramInitData } from "../app/telegram";
+
+/**
+ * `useTonProof`/`useVerifiedProfile` are called independently from both `ConnectScreen` and
+ * `ProfileScreen` (by design — see `useVerifiedProfile`'s doc comment), each with its own local
+ * React state. The `ton_proof` payload is single-use server-side (consumed via Redis GETDEL) —
+ * two independent hook instances both reacting to the same freshly-connected wallet raced to call
+ * `verify()` with the same proof, and the loser got `payload_invalid_or_used` (confirmed in
+ * production logs). Rather than restructure both screens to share one hook instance, de-duplicate
+ * at the network-call level: cache the in-flight/settled promise by the proof's own payload
+ * string (its nonce), so every caller for the same proof gets the exact same promise/result
+ * instead of firing a second request.
+ */
+let verifyPromiseCache: { payload: string; promise: Promise<TonProofVerifyResponse> } | null = null;
 
 /**
  * Implements the TonConnect `ton_proof` request/response dance described in
@@ -60,7 +73,12 @@ export function useTonProof() {
       throw new Error("No ton_proof available on the current wallet connection");
     }
 
-    return api.verifyTonProof(
+    const payload = tonProofResult.proof.payload;
+    if (verifyPromiseCache?.payload === payload) {
+      return verifyPromiseCache.promise;
+    }
+
+    const promise = api.verifyTonProof(
       {
         address: wallet.account.address,
         network: wallet.account.chain,
@@ -70,11 +88,19 @@ export function useTonProof() {
           timestamp: tonProofResult.proof.timestamp,
           domain: tonProofResult.proof.domain,
           signature: tonProofResult.proof.signature,
-          payload: tonProofResult.proof.payload,
+          payload,
         },
       },
       getTelegramInitData(),
     );
+    verifyPromiseCache = { payload, promise };
+    // A failed verification must not permanently poison this payload — clear the cache so a
+    // deliberate retry (which re-fetches a brand new payload anyway) isn't blocked by a stale
+    // rejected promise if the same payload string were ever reused.
+    promise.catch(() => {
+      if (verifyPromiseCache?.payload === payload) verifyPromiseCache = null;
+    });
+    return promise;
   }, [wallet, tonProofResult]);
 
   return {
