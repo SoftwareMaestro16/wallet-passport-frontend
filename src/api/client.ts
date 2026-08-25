@@ -13,20 +13,30 @@ const SESSION_TOKEN_STORAGE_KEY = "wallet-passport-session-token";
  * Tonkeeper) arrives with no cookie at all, and the user's wallet connect silently fails. The
  * server now also returns the raw session token in `/auth/telegram`'s JSON body; we resend it
  * as `Authorization: Bearer <token>` on every request, which isn't subject to any cookie
- * policy. sessionStorage (not a module-level variable) so a page reload — which several
- * Telegram clients do after returning from an external wallet app — doesn't lose it.
+ * policy. Persist in both Web Storage buckets: some Telegram/iOS wallet return flows drop the
+ * current tab session, while a same-launch soft reload may still preserve sessionStorage.
  */
 function getSessionToken(): string | null {
   try {
-    return sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
+    return sessionStorage.getItem(SESSION_TOKEN_STORAGE_KEY) || localStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
   } catch {
-    return null;
+    try {
+      return localStorage.getItem(SESSION_TOKEN_STORAGE_KEY);
+    } catch {
+      return null;
+    }
   }
 }
 
 function setSessionToken(token: string): void {
   try {
     sessionStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token);
+  } catch {
+    // Ignore and still try localStorage below.
+  }
+
+  try {
+    localStorage.setItem(SESSION_TOKEN_STORAGE_KEY, token);
   } catch {
     // sessionStorage unavailable (private mode, etc.) — the cookie fallback still applies.
   }
