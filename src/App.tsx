@@ -78,7 +78,13 @@ function readStoredTheme(fallback: AppTheme): AppTheme {
 function TonConnectThemeSync({ theme }: { theme: AppTheme }) {
   const [, setOptions] = useTonConnectUI();
   useEffect(() => {
-    setOptions({ uiPreferences: { theme: theme === "dark" ? THEME.DARK : THEME.LIGHT } });
+    // `setOptions` replaces `actionsConfiguration` wholesale (it's a direct field assignment
+    // in the SDK, not a merge) — omitting it here would silently drop `twaReturnUrl` on every
+    // theme change after the initial `TonConnectUIProvider` mount.
+    setOptions({
+      uiPreferences: { theme: theme === "dark" ? THEME.DARK : THEME.LIGHT },
+      actionsConfiguration: { twaReturnUrl: "https://t.me" },
+    });
   }, [theme, setOptions]);
   return null;
 }

@@ -4,6 +4,7 @@
     "valueProp": "A transparent TON passport for your wallet: age, activity and reputation — built from on-chain history, no manual input.",
     "freeScan": "Scanning is free.",
     "connectButton": "Connect Wallet",
+    "connectHint": "Connect your wallet at the top of the screen to get started",
     "testnetBadge": "Testnet",
     "testnetTitle": "MVP runs on testnet only",
     "testnetHint": "Mainnet is not used until explicitly enabled.",

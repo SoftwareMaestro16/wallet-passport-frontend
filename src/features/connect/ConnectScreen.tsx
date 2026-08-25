@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { TonConnectButton } from "@tonconnect/ui-react";
 import { Section, Cell, Button, Spinner } from "@telegram-apps/telegram-ui";
 import { hapticImpact } from "../../app/telegram";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
@@ -36,9 +35,7 @@ export function ConnectScreen() {
 
       {!isConnected && (
         <Section>
-          <div className="connect-cta">
-            <TonConnectButton />
-          </div>
+          <Cell>{t("connect.connectHint")}</Cell>
         </Section>
       )}
 
