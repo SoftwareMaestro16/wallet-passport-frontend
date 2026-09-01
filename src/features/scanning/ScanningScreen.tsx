@@ -1,11 +1,40 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Section, Cell, Spinner, Progress, Caption, Button } from "@telegram-apps/telegram-ui";
+import { Section, Progress, Button, Placeholder } from "@telegram-apps/telegram-ui";
+import { AlertTriangle, Check } from "lucide-react";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { hapticImpact, hapticNotification, hapticSelection, setClosingConfirmation } from "../../app/telegram";
 import { ScanIcon } from "../../shared/icons";
 import { useScanProgress, SCAN_STEP_COUNT } from "./useScanProgress";
+
+const RING_SIZE = 156;
+const RING_STROKE = 10;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
+function ProgressRing({ percent, label }: { percent: number; label: string }) {
+  const clamped = Math.max(0, Math.min(100, percent));
+  const offset = RING_CIRCUMFERENCE * (1 - clamped / 100);
+  return (
+    <div className="scan-ring-wrap" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={clamped}>
+      <svg className="scan-ring" viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`} aria-hidden="true">
+        <circle className="scan-ring-track" cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_RADIUS} />
+        <circle
+          className="scan-ring-value"
+          cx={RING_SIZE / 2}
+          cy={RING_SIZE / 2}
+          r={RING_RADIUS}
+          strokeDasharray={RING_CIRCUMFERENCE}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      <div className="scan-ring-center">
+        <span className="scanning-progress-value">{label}</span>
+      </div>
+    </div>
+  );
+}
 
 export function ScanningScreen() {
   const { t } = useTranslation();
@@ -57,38 +86,40 @@ export function ScanningScreen() {
   if (progress.failed) {
     return (
       <div className="screen scanning-screen">
-        <Section footer={progress.errorMessage ? undefined : t("scanning.failedHint")}>
-          <Cell
-            multiline
-            after={
-              <Button
-                size="s"
-                mode="outline"
-                onClick={() => {
-                  didFinishHaptic.current = false;
-                  hapticImpact("light");
-                  progress.retry();
-                }}
-              >
-                {t("scanning.retry")}
-              </Button>
+        <Section>
+          <Placeholder
+            header={t("scanning.failed")}
+            description={progress.errorMessage ?? t("scanning.failedHint")}
+            action={
+              <div className="empty-actions">
+                <Button
+                  size="m"
+                  mode="outline"
+                  onClick={() => {
+                    hapticSelection();
+                    navigate("/", { replace: true });
+                  }}
+                >
+                  {t("scanning.backToConnect")}
+                </Button>
+                <Button
+                  size="m"
+                  onClick={() => {
+                    didFinishHaptic.current = false;
+                    hapticImpact("light");
+                    progress.retry();
+                  }}
+                >
+                  {t("scanning.retry")}
+                </Button>
+              </div>
             }
           >
-            {progress.errorMessage ? `${t("scanning.failed")} (${progress.errorMessage})` : t("scanning.failed")}
-          </Cell>
+            <span className="state-icon state-icon-danger" aria-hidden="true">
+              <AlertTriangle size={28} strokeWidth={2} />
+            </span>
+          </Placeholder>
         </Section>
-
-        <Button
-          mode="plain"
-          size="s"
-          stretched
-          onClick={() => {
-            hapticSelection();
-            navigate("/", { replace: true });
-          }}
-        >
-          {t("scanning.backToConnect")}
-        </Button>
       </div>
     );
   }
@@ -104,22 +135,33 @@ export function ScanningScreen() {
             </span>
           </Section.Header>
         }
-        footer={t("scanning.subtitle")}
       >
         <div className="scanning-body">
-          <Spinner size="l" />
-          <div className="scanning-progress-head">
-            <strong className="scanning-progress-value">{t("scanning.progressPct", { percent: progressPercent })}</strong>
+          <ProgressRing percent={progressPercent} label={t("scanning.progressPct", { percent: progressPercent })} />
+          <Progress className="scanning-progress-bar" value={progressPercent} />
+          <div className="scanning-copy">
+            <span className="scanning-step">{stepLabels[progress.stepIndex]}</span>
+            <span className="scanning-progress-copy">{progressDetail}</span>
           </div>
-          <Progress value={progress.progressPct} />
-          <Caption level="1" weight="2" className="scanning-step">
-            {stepLabels[progress.stepIndex]}
-          </Caption>
-          <Caption level="1" weight="2" className="scanning-progress-copy">
-            {progressDetail}
-          </Caption>
+          <ol className="scan-steps" aria-label={t("scanning.title")}>
+            {stepLabels.map((label, index) => {
+              const state =
+                progress.done || index < progress.stepIndex ? "done" : index === progress.stepIndex ? "active" : "pending";
+              return (
+                <li key={label} className={`scan-step scan-step-${state}`} aria-current={state === "active" ? "step" : undefined}>
+                  <span className="scan-step-icon" aria-hidden="true">
+                    {state === "done" && <Check size={14} strokeWidth={3} />}
+                    {state === "active" && <span className="scan-step-dot" />}
+                  </span>
+                  <span>{label}</span>
+                </li>
+              );
+            })}
+          </ol>
         </div>
       </Section>
+
+      <p className="scanning-hint">{t("scanning.subtitle")}</p>
 
       <Button
         mode="plain"

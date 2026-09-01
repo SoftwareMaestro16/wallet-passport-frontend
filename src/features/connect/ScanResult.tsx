@@ -12,9 +12,16 @@ import {
   formatTon,
 } from "../profile/formatters";
 
+/** Key/value row: label on the left, value right-aligned so long labels never collide with numbers. */
 function StatCell({ label, value }: { label: string; value: ReactNode }) {
-  return <Cell subtitle={label}>{value}</Cell>;
+  return (
+    <Cell multiline className="stat-cell" after={<span className="stat-value">{value}</span>}>
+      {label}
+    </Cell>
+  );
 }
+
+const COMING_SOON_KEYS = ["defi", "nfts", "telegramAssets", "staking", "history", "rareRelics"] as const;
 
 export function ScanResult({
   data,
@@ -28,12 +35,16 @@ export function ScanResult({
   const { score, stats } = data;
   const topFactors = score.dominantFactors ?? [...score.factors].sort((a, b) => b.value - a.value).slice(0, 3);
   const firstTx = formatDate(stats.firstTxAt, lang);
+  const jettonFooter = !stats.dataConfidence.jettonDataAvailable ? t("profile.sections.jettons.partialData") : undefined;
 
   return (
     <>
       <ScanResultScoreBlock data={data} topFactors={topFactors} lang={lang} t={t} />
 
-      <Section header={t("profile.sections.overview.title")} footer={stats.totalTxCount === 0 ? t("profile.sections.overview.noHistory") : undefined}>
+      <Section
+        header={t("profile.sections.overview.title")}
+        footer={stats.totalTxCount === 0 ? t("profile.sections.overview.noHistory") : undefined}
+      >
         {firstTx && <StatCell label={t("profile.sections.overview.firstTx")} value={firstTx} />}
         <StatCell
           label={t("profile.sections.overview.age")}
@@ -57,16 +68,10 @@ export function ScanResult({
           label={t("profile.sections.activity.activeMonths")}
           value={formatNumber(stats.activeMonthsCount, lang)}
         />
-        <StatCell
-          label={t("profile.sections.activity.consistency")}
-          value={Math.round(factorValue(score, "C"))}
-        />
+        <StatCell label={t("profile.sections.activity.consistency")} value={Math.round(factorValue(score, "C"))} />
       </Section>
 
-      <Section
-        header={t("profile.sections.jettons.title")}
-        footer={!stats.dataConfidence.jettonDataAvailable ? t("profile.sections.jettons.partialData") : undefined}
-      >
+      <Section header={t("profile.sections.jettons.title")} footer={jettonFooter}>
         <StatCell label={t("profile.sections.jettons.transfers")} value={formatNumber(stats.jettonTransferCount, lang)} />
         <StatCell label={t("profile.sections.jettons.burns")} value={formatNumber(stats.jettonBurnCount, lang)} />
         <StatCell
@@ -81,24 +86,16 @@ export function ScanResult({
       </Section>
 
       <Section header={t("profile.sections.comingSoon.badge")}>
-        <Cell subtitle={t("profile.sections.comingSoon.defi.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
-          {t("profile.sections.comingSoon.defi.title")}
-        </Cell>
-        <Cell subtitle={t("profile.sections.comingSoon.nfts.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
-          {t("profile.sections.comingSoon.nfts.title")}
-        </Cell>
-        <Cell subtitle={t("profile.sections.comingSoon.telegramAssets.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
-          {t("profile.sections.comingSoon.telegramAssets.title")}
-        </Cell>
-        <Cell subtitle={t("profile.sections.comingSoon.staking.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
-          {t("profile.sections.comingSoon.staking.title")}
-        </Cell>
-        <Cell subtitle={t("profile.sections.comingSoon.history.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
-          {t("profile.sections.comingSoon.history.title")}
-        </Cell>
-        <Cell subtitle={t("profile.sections.comingSoon.rareRelics.body")} after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}>
-          {t("profile.sections.comingSoon.rareRelics.title")}
-        </Cell>
+        {COMING_SOON_KEYS.map((key) => (
+          <Cell
+            key={key}
+            multiline
+            subtitle={t(`profile.sections.comingSoon.${key}.body`)}
+            after={<Badge type="number">{t("profile.sections.comingSoon.badge")}</Badge>}
+          >
+            {t(`profile.sections.comingSoon.${key}.title`)}
+          </Cell>
+        ))}
       </Section>
     </>
   );
@@ -123,9 +120,10 @@ function ScanResultScoreBlock({
     secondary: secondary ? t(factorLabelKey(secondary.code)) : t("profile.result.factorFallback"),
     score: score.tonScore,
   });
+  const footer = t("profile.reveal.footer");
 
   return (
-    <Section header={t("profile.result.title")} footer={t("profile.reveal.footer")}>
+    <Section header={t("profile.result.title")} footer={footer || undefined}>
       <div className="profile-result-card">
         <div className="profile-result-score">
           <div className="profile-score-hex" aria-label={`${t("profile.scoreLabel")} ${score.tonScore}`}>

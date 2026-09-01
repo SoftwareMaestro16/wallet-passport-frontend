@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { AppRoot, Button, Tabbar } from "@telegram-apps/telegram-ui";
-import { Gem, ScanLine, UserRound } from "lucide-react";
+import { Fingerprint, Gem, ScanLine, UserRound } from "lucide-react";
 import { TonConnectButton, useTonConnectUI } from "@tonconnect/ui-react";
 import { THEME } from "@tonconnect/ui";
 import { TonConnectProvider } from "./ton/TonConnectProvider";
@@ -108,6 +108,9 @@ function AppShell({ theme }: { theme: AppTheme }) {
       <header className="app-header">
         <div className="app-header-main">
           <div className="app-brand" aria-label={t("connect.title")}>
+            <span className="app-brand-mark" aria-hidden="true">
+              <Fingerprint size={16} strokeWidth={2.4} />
+            </span>
             <span>{headerTitle}</span>
           </div>
           <TonConnectButton />

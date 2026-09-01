@@ -26,12 +26,10 @@ export function PassportEligibility({
   const hasMainPassportAction = categories.some(
     (category) => category.category === "passport" && (category.canMint || category.canRefresh || category.eligible),
   );
+  const footer = hasMainPassportAction ? t("profile.eligible.footer") : t("profile.eligible.footerLocked");
 
   return (
-    <Section
-      header={t("profile.eligible.title")}
-      footer={hasMainPassportAction ? t("profile.eligible.footer") : t("profile.eligible.footerLocked")}
-    >
+    <Section header={t("profile.eligible.title")} footer={footer || undefined}>
       <div className="eligible-passport-block">
         <div className="eligible-passport-head">
           <div>
@@ -50,7 +48,9 @@ export function PassportEligibility({
             ))}
           </div>
         ) : (
-          <Cell subtitle={t("profile.eligible.emptyHint")}>{t("profile.eligible.empty")}</Cell>
+          <Cell multiline subtitle={t("profile.eligible.emptyHint")}>
+            {t("profile.eligible.empty")}
+          </Cell>
         )}
       </div>
     </Section>

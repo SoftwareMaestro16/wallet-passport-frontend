@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Section, Cell, Avatar, Badge, Switch, SegmentedControl, IconButton, Button, Spinner } from "@telegram-apps/telegram-ui";
-import { Info } from "lucide-react";
+import { Info, Link2 } from "lucide-react";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { TestnetGuard } from "../../shared/TestnetGuard";
@@ -114,7 +114,11 @@ export function ProfileScreen() {
                 {userSubtitle(headerUser.username, headerUser.languageCode, t)}
               </span>
             </div>
-            {headerUser.isPremium && <Badge type="number">Premium</Badge>}
+            {headerUser.isPremium && (
+              <Badge type="number" className="profile-header-badge">
+                Premium
+              </Badge>
+            )}
           </div>
         )}
       </Section>
@@ -182,7 +186,9 @@ export function ProfileScreen() {
 
       {state.status === "verifying" && (
         <Section>
-          <Cell before={<Spinner size="s" />}>{t("profile.verifying")}</Cell>
+          <Cell multiline before={<Spinner size="s" />}>
+            {t("profile.verifying")}
+          </Cell>
         </Section>
       )}
     </div>
@@ -216,8 +222,9 @@ function ReferralBlock({
     <>
       <Section
         header={
-          <span className="referral-section-header">
-            <span>{t("referral.title")}</span>
+          <Section.Header>
+            <span className="referral-section-header">
+              <span>{t("referral.title")}</span>
             {isConnected && (
               <IconButton
                 size="s"
@@ -232,15 +239,17 @@ function ReferralBlock({
                 <Info size={20} strokeWidth={2} />
               </IconButton>
             )}
-          </span>
+            </span>
+          </Section.Header>
         }
-        footer={isConnected ? t("referral.footer") : undefined}
+        footer={isConnected && t("referral.footer") ? t("referral.footer") : undefined}
       >
         {!isConnected ? (
           <Cell multiline>{t("referral.connectToGet")}</Cell>
         ) : (
           <div className="referral-body">
             <div className="referral-link-row">
+              <Link2 size={18} strokeWidth={2} aria-hidden="true" />
               <span className="mono referral-link">{referralLink}</span>
             </div>
             <div className="referral-actions">

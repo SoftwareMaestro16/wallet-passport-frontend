@@ -119,7 +119,7 @@
       "title": "Reveal",
       "ready": "Профиль кошелька готов",
       "subtitle": "Результат построен по последнему завершённому сканированию.",
-      "footer": "Данные отображаются с backend/chain-слоя; frontend не вычисляет Score и не подписывает метаданные."
+      "footer": ""
     },
     "summary": {
       "title": "Wallet Score",
@@ -145,8 +145,8 @@
       "actionable_other": "{{count}} можно выпустить или обновить сейчас",
       "noActionable": "Новые выпуски пока недоступны",
       "cta": "Перейти к mint",
-      "footer": "Mint screen пока выпускает основной Passport на testnet; permit приходит с backend и отправляется без изменений.",
-      "footerLocked": "Категории показаны честно по данным backend; mint станет активным, когда основной Passport будет доступен.",
+      "footer": "",
+      "footerLocked": "",
       "empty": "Нет доступных категорий",
       "emptyHint": "Продолжайте пользоваться кошельком и повторите скан позже.",
       "status": {

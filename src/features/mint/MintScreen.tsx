@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Section, Cell, Button, Spinner } from "@telegram-apps/telegram-ui";
+import { Section, Cell, Button, Spinner, Placeholder } from "@telegram-apps/telegram-ui";
+import { AlertTriangle, CheckCircle2, Gem, Wallet } from "lucide-react";
 import { useTonConnectAccount } from "../../ton/useTonConnectAccount";
 import { useVerifiedProfile } from "../../ton/useVerifiedProfile";
 import { getTelegramInitData, hapticImpact, hapticNotification } from "../../app/telegram";
@@ -36,9 +37,8 @@ export function MintScreen() {
   const { t } = useTranslation();
   const { isConnected, tonConnectUI, address } = useTonConnectAccount();
   const { state: verifiedState } = useVerifiedProfile();
-  const walletPassports = useWalletPassports(
-    isConnected && verifiedState.status === "success" ? address : undefined,
-  );
+  const isVerified = isConnected && verifiedState.status === "success";
+  const walletPassports = useWalletPassports(isVerified ? address : undefined);
   const [state, setState] = useState<MintState>({ status: "idle" });
   async function handleMint() {
     hapticImpact("medium");
@@ -68,19 +68,31 @@ export function MintScreen() {
 
   return (
     <div className="screen mint-screen">
-      <Section header={t("mint.title")} footer={t("mint.description")} />
+      <Section>
+        <div className="hero-panel hero-panel-compact">
+          <span className="hero-eyebrow">
+            <Gem size={14} strokeWidth={2.2} aria-hidden="true" />
+            {t("connect.testnetBadge")}
+          </span>
+          <h1 className="hero-title">{t("mint.title")}</h1>
+          <p className="hero-copy">{t("mint.description")}</p>
+        </div>
+      </Section>
 
       <TestnetGuard />
 
-      {isConnected && verifiedState.status === "success" && walletPassports.state.status === "loading" && (
+      {isVerified && walletPassports.state.status === "loading" && (
         <Section>
-          <Cell before={<Spinner size="s" />}>{t("profile.loadingProfile")}</Cell>
+          <Cell multiline before={<Spinner size="s" />}>
+            {t("profile.loadingProfile")}
+          </Cell>
         </Section>
       )}
 
-      {isConnected && verifiedState.status === "success" && walletPassports.state.status === "error" && (
+      {isVerified && walletPassports.state.status === "error" && (
         <Section footer={t("profile.profileError")}>
           <Cell
+            multiline
             after={
               <Button size="s" mode="outline" onClick={walletPassports.reload}>
                 {t("profile.retry")}
@@ -92,44 +104,72 @@ export function MintScreen() {
         </Section>
       )}
 
-      {isConnected && verifiedState.status === "success" && walletPassports.state.status === "ready" && (
+      {isVerified && walletPassports.state.status === "ready" && (
         <PassportEligibility categories={walletPassports.state.data.categories} t={t} />
       )}
 
-      <Section>
-        {!isConnected && <Cell>{t("mint.notConnected")}</Cell>}
-
-        {state.status !== "error" && (
-          <div className="mint-action">
-            <Button size="l" stretched loading={isBusy} disabled={!isConnected || isBusy} onClick={handleMint}>
-              {t("mint.mintButton")}
-            </Button>
-          </div>
-        )}
-
-        {state.status === "error" && (
-          <Cell
-            multiline
-            after={
-              <Button size="s" mode="outline" onClick={handleMint}>
-                {t("mint.retry")}
+      {!isConnected ? (
+        <Section>
+          <Placeholder header={t("mint.notConnected")} description={t("connect.connectHint")}>
+            <span className="state-icon" aria-hidden="true">
+              <Wallet size={28} strokeWidth={2} />
+            </span>
+          </Placeholder>
+        </Section>
+      ) : (
+        <Section>
+          {state.status !== "error" && (
+            <div className="mint-action">
+              <Button size="l" stretched loading={isBusy} disabled={isBusy} onClick={handleMint}>
+                {t("mint.mintButton")}
               </Button>
-            }
-          >
-            {state.message}
-          </Cell>
-        )}
-      </Section>
+            </div>
+          )}
 
-      <Section>
-        <Cell before={isBusy ? <Spinner size="s" /> : undefined}>
-          {state.status === "idle" && t("mint.statusIdle")}
-          {isBusy && t("mint.statusPending")}
-          {state.status === "success" && t("mint.statusSuccess")}
-          {state.status === "error" && t("common.error")}
-        </Cell>
-      </Section>
+          {state.status === "error" && (
+            <Cell
+              multiline
+              before={
+                <span className="state-icon state-icon-s state-icon-danger" aria-hidden="true">
+                  <AlertTriangle size={18} strokeWidth={2.2} />
+                </span>
+              }
+              after={
+                <Button size="s" mode="outline" onClick={handleMint}>
+                  {t("mint.retry")}
+                </Button>
+              }
+            >
+              {state.message}
+            </Cell>
+          )}
 
+          {state.status === "idle" && (
+            <Cell multiline className="mint-status-cell">
+              {t("mint.statusIdle")}
+            </Cell>
+          )}
+
+          {isBusy && (
+            <Cell multiline before={<Spinner size="s" />}>
+              {t("mint.statusPending")}
+            </Cell>
+          )}
+
+          {state.status === "success" && (
+            <Cell
+              multiline
+              before={
+                <span className="state-icon state-icon-s state-icon-success" aria-hidden="true">
+                  <CheckCircle2 size={18} strokeWidth={2.2} />
+                </span>
+              }
+            >
+              {t("mint.statusSuccess")}
+            </Cell>
+          )}
+        </Section>
+      )}
     </div>
   );
 }
