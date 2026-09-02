@@ -33,6 +33,29 @@ at the dev server, registered as a Mini App with @BotFather.
 The switcher (top-right corner, `src/shared/LanguageSwitcher.tsx`) lets the user override
 auto-detection at any time.
 
+## Design system
+
+`design-system/wallet-passport/MASTER.md` is the visual source of truth, generated with the
+[ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) skill
+(`search.py "crypto wallet fintech telegram mini app mobile trust" --design-system`) and applied in
+`src/App.css`:
+
+- **Style:** Minimalism & Swiss — flat surfaces, sharp low shadows, uppercase 12px section labels,
+  8pt spacing rhythm (`--space-*`), type scale 12/14/16/18/24/32.
+- **Palette:** "Gold trust" — amber primary `#F59E0B` with slate-900 text on it, slate surfaces
+  (`#F8FAFC`/`#FFFFFF` light, `#0F172A`/`#222735` dark), purple `#8B5CF6` only as a small accent.
+  Text-safe amber (`--wp-primary-text`) is `#B45309` in light and `#FBBF24` in dark so links and
+  active nav stay ≥4.5:1.
+- **Typography:** IBM Plex Sans (Google Fonts link in `index.html`, system stack fallback).
+- **Motion:** 150–320ms tokens, transform/opacity only, 40ms stagger on card entry, everything off
+  under `prefers-reduced-motion`.
+
+All brand values live as `--wp-*` tokens on `.app-root` and are mapped onto the kit's `--tgui--*`
+variables (button, link, section header, segmented control, tabbar) and onto TonConnect's
+`colorsSet` (`src/ton/TonConnectProvider.tsx`), so kit components, custom blocks and the
+TonConnect button read as one system in both themes. Page-specific overrides go in
+`design-system/wallet-passport/pages/<page>.md` per the skill's workflow.
+
 ## UI kit — `@telegram-apps/telegram-ui`
 
 Every screen is built from this kit's primitives (`Section`, `Cell`, `Button`, `Tabbar`, `Banner`,

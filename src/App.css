@@ -1,95 +1,147 @@
 /*
- * Most of the UI is @telegram-apps/telegram-ui primitives (Section/Cell/Button/Tabbar/...), which
- * carry their own theme-aware styling. What's left here is layout glue the kit doesn't own: page
- * shell sizing, the shared "card" look for every Section, the floating Tabbar, and the custom
- * blocks (score card, radar, scanning ring, eligibility tiles, referral panel).
+ * Visual system: design-system/wallet-passport/MASTER.md (generated with ui-ux-pro-max).
+ *   Style      — Minimalism & Swiss: clean surfaces, clear type hierarchy, sharp/low shadows,
+ *                grid-based spacing on an 8pt rhythm, geometric sans.
+ *   Palette    — "Gold trust": amber primary (#F59E0B on slate-900 text), slate surfaces,
+ *                purple (#8B5CF6) reserved as a small informational accent. No AI-style
+ *                purple/pink gradients.
+ *   Typography — IBM Plex Sans, scale 12 / 14 / 16 / 18 / 24 / 32, body line-height 1.5.
+ *   Motion     — 150–250ms token durations, transform/opacity only, 40ms stagger on entry,
+ *                everything off under prefers-reduced-motion.
+ *
+ * Most UI is @telegram-apps/telegram-ui primitives; the tokens below re-skin them (button,
+ * link, section header, segmented control, tabbar) so the kit and the custom blocks read as one
+ * system in both themes. Layout glue and custom blocks (score card, radar, scanning ring,
+ * eligibility tiles, referral panel) follow.
  */
+
+/* ---------------------------------------------------------------------------------------------
+ * 1. Tokens
+ * ------------------------------------------------------------------------------------------- */
+
+.app-root {
+  /* Brand */
+  --wp-primary: #f59e0b;
+  --wp-primary-strong: #d97706;
+  --wp-on-primary: #0f172a;
+  --wp-secondary: #fbbf24;
+  --wp-accent: #8b5cf6;
+  --wp-success: #16a34a;
+  --wp-warning: #d97706;
+  --wp-danger: #dc2626;
+
+  /* Text-safe primary (4.5:1 on the surface) — used for links, active nav, labels */
+  --wp-primary-text: #b45309;
+
+  /* Factor tones (radar / pills) */
+  --wp-tone-steady: #16a34a;
+  --wp-tone-flow: #0284c7;
+  --wp-tone-explore: #d97706;
+  --wp-tone-craft: #7c3aed;
+
+  /* Shape & elevation (Swiss: moderate radii, sharp low shadows) */
+  --wp-radius-card: 16px;
+  --wp-radius-tile: 12px;
+  --wp-radius-pill: 999px;
+  --wp-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 1px rgba(15, 23, 42, 0.04);
+  --wp-shadow-2: 0 4px 12px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.06);
+  --wp-shadow-3: 0 12px 32px rgba(15, 23, 42, 0.18), 0 2px 4px rgba(15, 23, 42, 0.08);
+
+  /* Spacing (8pt rhythm) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Motion */
+  --wp-dur-fast: 150ms;
+  --wp-dur: 220ms;
+  --wp-dur-slow: 320ms;
+  --wp-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --wp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Kit re-skin: filled buttons, links/active nav, header labels, selection fills. */
+  --tgui--font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --tgui--button_color: var(--wp-primary);
+  --tgui--button_text_color: var(--wp-on-primary);
+  --tgui--link_color: var(--wp-primary-text);
+  --tgui--accent_text_color: var(--wp-primary-text);
+  --tgui--secondary_fill: color-mix(in srgb, var(--wp-primary) 16%, transparent);
+  --tgui--destructive_text_color: var(--wp-danger);
+}
+
+/*
+ * Light surfaces (slate-50 ground, white cards). Set on our own data attribute — see the
+ * dark-mode note below for why we don't rely on AppRoot's internal appearance class.
+ */
+.app-root[data-wp-theme="light"] {
+  --tgui--bg_color: #f8fafc;
+  --tgui--text_color: #0f172a;
+  --tgui--hint_color: #64748b;
+  --tgui--secondary_bg_color: #f1f5f9;
+  --tgui--header_bg_color: #ffffff;
+  --tgui--section_bg_color: #ffffff;
+  --tgui--section_header_text_color: #64748b;
+  --tgui--subtitle_text_color: #475569;
+  --tgui--tertiary_bg_color: #e2e8f0;
+  --tgui--quartenary_bg_color: #cbd5e1;
+  --tgui--segmented_control_active_bg: #ffffff;
+  --tgui--card_bg_color: #ffffff;
+  --tgui--secondary_hint_color: #64748b;
+  --tgui--divider: rgba(15, 23, 42, 0.08);
+  --tgui--outline: #e2e8f0;
+}
+
+/*
+ * Dark surfaces (slate-900 ground, #222735 cards — MASTER.md palette). Dark mode uses lighter,
+ * desaturated variants for text-safe colours rather than inverted ones.
+ *
+ * Belt-and-suspenders: AppRoot's own `useAppearance` hook keeps internal state seeded from the
+ * `appearance` prop on first mount and only re-syncs it in an effect — on at least one real
+ * Telegram client this produced a stuck-light SegmentedControl against an otherwise-dark shell.
+ * Rather than chase AppRoot's timing, force the kit's custom properties off our own
+ * `data-scheme`/`data-wp-theme` attributes, which mirror the value App.tsx computes.
+ */
+.app-root[data-scheme="dark"],
+.app-root[data-wp-theme="dark"] {
+  --wp-primary-text: #fbbf24;
+  --wp-success: #4ade80;
+  --wp-warning: #fbbf24;
+  --wp-danger: #f87171;
+  --wp-tone-steady: #4ade80;
+  --wp-tone-flow: #38bdf8;
+  --wp-tone-explore: #fbbf24;
+  --wp-tone-craft: #a78bfa;
+  --wp-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --wp-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --wp-shadow-3: 0 12px 32px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.3);
+
+  --tgui--bg_color: #0f172a;
+  --tgui--text_color: #f8fafc;
+  --tgui--hint_color: #94a3b8;
+  --tgui--secondary_bg_color: #272f42;
+  --tgui--header_bg_color: #0f172a;
+  --tgui--section_bg_color: #222735;
+  --tgui--section_header_text_color: #94a3b8;
+  --tgui--subtitle_text_color: #94a3b8;
+  --tgui--tertiary_bg_color: #2e374b;
+  --tgui--quartenary_bg_color: #334155;
+  --tgui--segmented_control_active_bg: #334155;
+  --tgui--card_bg_color: #222735;
+  --tgui--secondary_hint_color: #94a3b8;
+  --tgui--divider: rgba(148, 163, 184, 0.14);
+  --tgui--outline: #334155;
+}
 
 .app-root {
   width: 100%;
   max-width: 100vw;
   height: 100dvh;
   overflow: hidden;
-}
-
-/*
- * Belt-and-suspenders dark-theme override: AppRoot's own `useAppearance` hook keeps its own
- * internal state seeded from the `appearance` prop's value on first mount and only re-syncs it
- * via a `useEffect` — on at least one real Telegram client this produced a stuck-light
- * SegmentedControl (and friends) against an otherwise-correctly-dark app shell, and the exact
- * root cause wasn't reproducible outside real Telegram to fix upstream with confidence. Rather
- * than keep chasing AppRoot's internal timing, force telegram-ui's own dark-mode custom
- * properties (values copied verbatim from its `.tgui-865b921add8ee075` class, see
- * node_modules/@telegram-apps/telegram-ui/dist/styles.css) directly off our own `data-scheme`
- * attribute, which mirrors the exact same `appearance` value App.tsx already computes correctly
- * elsewhere (it drives the working --tg-theme-* vars). `.app-root[data-scheme]` has higher
- * specificity than AppRoot's own single-class selector, so this wins regardless of whichever
- * value AppRoot's internal state landed on.
- */
-.app-root[data-scheme="dark"] {
-  --tgui--bg_color: var(--tg-theme-bg-color, #111b25);
-  --tgui--text_color: var(--tg-theme-text-color, #fff);
-  --tgui--hint_color: var(--tg-theme-hint-color, #9eabba);
-  --tgui--secondary_bg_color: var(--tg-theme-secondary-bg-color, #172432);
-  --tgui--header_bg_color: var(--tg-theme-header-bg-color, #172432);
-  --tgui--section_bg_color: var(--tg-theme-section-bg-color, #172432);
-  --tgui--section_header_text_color: var(--tg-theme-section-header-text-color, #9eabba);
-  --tgui--subtitle_text_color: var(--tg-theme-subtitle-text-color, #9eabba);
-  --tgui--tertiary_bg_color: #1b2938;
-  --tgui--quartenary_bg_color: #223246;
-  --tgui--segmented_control_active_bg: #223246;
-  --tgui--card_bg_color: #172432;
-  --tgui--secondary_hint_color: #718195;
-  --tgui--divider: rgba(255, 255, 255, 0.07);
-  --tgui--outline: rgba(255, 255, 255, 0.11);
-}
-
-.app-root[data-wp-theme="light"] {
-  --tgui--bg_color: #ffffff;
-  --tgui--text_color: #111111;
-  --tgui--hint_color: #707579;
-  --tgui--secondary_bg_color: #f4f5f7;
-  --tgui--header_bg_color: #ffffff;
-  --tgui--section_bg_color: #ffffff;
-  --tgui--section_header_text_color: #707579;
-  --tgui--subtitle_text_color: #707579;
-  --tgui--tertiary_bg_color: #eceef2;
-  --tgui--quartenary_bg_color: #e4e7ec;
-  --tgui--segmented_control_active_bg: #ffffff;
-  --tgui--card_bg_color: #ffffff;
-  --tgui--secondary_hint_color: #a2a7ae;
-  --tgui--divider: rgba(0, 0, 0, 0.08);
-  --tgui--outline: rgba(0, 0, 0, 0.12);
-}
-
-.app-root[data-wp-theme="dark"] {
-  --tgui--bg_color: #111b25;
-  --tgui--text_color: #ffffff;
-  --tgui--hint_color: #9eabba;
-  --tgui--secondary_bg_color: #172432;
-  --tgui--header_bg_color: #172432;
-  --tgui--section_bg_color: #172432;
-  --tgui--section_header_text_color: #9eabba;
-  --tgui--subtitle_text_color: #9eabba;
-  --tgui--tertiary_bg_color: #1b2938;
-  --tgui--quartenary_bg_color: #223246;
-  --tgui--segmented_control_active_bg: #223246;
-  --tgui--card_bg_color: #172432;
-  --tgui--secondary_hint_color: #718195;
-  --tgui--divider: rgba(255, 255, 255, 0.07);
-  --tgui--outline: rgba(255, 255, 255, 0.11);
-}
-
-/* Shared design tokens for the hand-rolled blocks below. */
-.app-root {
-  --wp-accent: var(--tg-theme-button-color, #2ea6ff);
-  --wp-accent-text: var(--tg-theme-button-text-color, #ffffff);
-  --wp-success: #19c37d;
-  --wp-warning: #f0b429;
-  --wp-danger: #e5484d;
-  --wp-radius-card: 20px;
-  --wp-radius-tile: 16px;
-  --wp-card-shadow: 0 10px 26px color-mix(in srgb, var(--tgui--text_color, #111111) 6%, transparent);
+  font-family: var(--tgui--font-family);
 }
 
 .app-shell {
@@ -100,24 +152,28 @@
   min-width: 0;
   height: 100dvh;
   overflow: hidden;
-  /* --tgui--bg_color already resolves through --tg-theme-bg-color to the kit's own light/dark
-     default (see AppRoot's appearance class) — reference it directly so this shell never drifts
-     out of sync with the Cells/Sections rendered inside it when running outside real Telegram. */
-  background: var(--wp-bg-color, var(--tgui--bg_color, #ffffff));
+  background: var(--wp-bg-color, var(--tgui--bg_color, #f8fafc));
+}
+
+/* Keyboard focus is always visible (WCAG); the kit removes outlines on several controls. */
+.app-root :where(a, button, [role="button"], [role="tab"], input, [tabindex]):focus-visible {
+  outline: 2px solid var(--wp-primary-text);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
 /* ---------------------------------------------------------------------------------------------
- * Header
+ * 2. Header
  * ------------------------------------------------------------------------------------------- */
 
 .app-header {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   flex: 0 0 auto;
-  padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
+  padding: calc(env(safe-area-inset-top, 0px) + var(--space-3)) var(--space-4) var(--space-3);
   max-width: 100vw;
-  background: var(--wp-header-color, var(--tgui--header_bg_color, var(--tgui--bg_color, #0f0f10)));
+  background: var(--wp-header-color, var(--tgui--header_bg_color, var(--tgui--bg_color, #ffffff)));
   border-bottom: 1px solid var(--tgui--divider);
   z-index: 20;
 }
@@ -127,9 +183,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
   width: 100%;
   min-width: 0;
+  min-height: 44px;
 }
 
 :root[data-tg-fullscreen-requested="true"] .app-header {
@@ -139,11 +196,12 @@
 .app-brand {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   color: var(--tgui--text_color);
   font-size: 18px;
-  font-weight: 760;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   line-height: 1;
   white-space: nowrap;
 }
@@ -152,14 +210,14 @@
   display: inline-grid;
   flex: 0 0 auto;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  background: linear-gradient(145deg, var(--wp-accent), color-mix(in srgb, var(--wp-success) 55%, var(--wp-accent)));
-  color: var(--wp-accent-text);
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--wp-primary);
+  color: var(--wp-on-primary);
   font-size: 11px;
-  font-weight: 800;
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--wp-accent) 28%, transparent);
+  font-weight: 700;
+  box-shadow: var(--wp-shadow-1);
 }
 
 /* TonConnect renders its own button; keep it from pushing the brand off-screen on narrow widths. */
@@ -173,9 +231,7 @@
   flex-direction: column;
   min-height: 100dvh;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--wp-accent) 16%, transparent), transparent 34%),
-    var(--tgui--bg_color, #ffffff);
+  background: var(--tgui--bg_color, #f8fafc);
   color: var(--tgui--text_color);
 }
 
@@ -185,14 +241,14 @@
   justify-content: space-between;
   gap: 10px;
   flex: 0 0 auto;
-  padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 8px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) var(--space-4) var(--space-2);
 }
 
 .telegram-only-main {
   display: grid;
   place-items: center;
   flex: 1;
-  padding: 18px 16px calc(env(safe-area-inset-bottom, 0px) + 22px);
+  padding: var(--space-5) var(--space-4) calc(env(safe-area-inset-bottom, 0px) + var(--space-6));
 }
 
 .telegram-only-panel {
@@ -200,12 +256,12 @@
   flex-direction: column;
   align-items: center;
   width: min(100%, 430px);
-  gap: 14px;
-  padding: 28px 20px 22px;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-5) var(--space-6);
   border: 1px solid var(--tgui--outline);
   border-radius: var(--wp-radius-card);
-  background: color-mix(in srgb, var(--tgui--secondary_bg_color, #f4f4f5) 94%, transparent);
-  box-shadow: 0 18px 54px color-mix(in srgb, var(--tgui--text_color, #111111) 10%, transparent);
+  background: var(--tgui--section_bg_color);
+  box-shadow: var(--wp-shadow-2);
   text-align: center;
 }
 
@@ -215,9 +271,9 @@
   width: 64px;
   height: 64px;
   border-radius: 18px;
-  background: linear-gradient(145deg, var(--wp-accent), color-mix(in srgb, var(--wp-success) 55%, var(--wp-accent)));
-  color: var(--wp-accent-text);
-  font-weight: 800;
+  background: var(--wp-primary);
+  color: var(--wp-on-primary);
+  font-weight: 700;
   letter-spacing: 0;
 }
 
@@ -236,14 +292,12 @@
   display: none;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--space-1);
   width: 100%;
   min-width: 0;
-  padding: 6px;
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--tgui--bg_color) 60%, transparent);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  padding: var(--space-1);
+  border-radius: var(--wp-radius-pill);
+  background: var(--tgui--secondary_bg_color);
 }
 
 .app-topnav-item {
@@ -253,7 +307,7 @@
 }
 
 /* ---------------------------------------------------------------------------------------------
- * Main scroll area + floating Tabbar
+ * 3. Main scroll area + floating Tabbar
  * ------------------------------------------------------------------------------------------- */
 
 .app-main {
@@ -263,9 +317,9 @@
   overflow-x: hidden;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 12px 0 16px;
-  /* .app-tabbar floats above the viewport edge (own height + its bottom margin) —
-     keep content clear of that whole footprint, not just the bar's own height. */
+  padding: var(--space-3) 0 var(--space-4);
+  /* .app-tabbar floats above the viewport edge (own height + bottom margin) — keep content
+     clear of the whole footprint, not just the bar's own height. */
   padding-bottom: calc(112px + var(--tgui--safe_area_inset_bottom, 0px));
 }
 
@@ -273,47 +327,42 @@
   width: 100%;
   max-width: 100vw;
   min-width: 0;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
   min-height: 100%;
   margin-inline: auto;
 }
 
-/* Floating "liquid glass" tabbar: detached from the screen edges with margin on every side
-   (including bottom, layered on top of the safe-area inset so it clears the home indicator),
-   pill-rounded, frosted background tinted from the theme's own surface tokens so it flips with
-   light/dark instead of a hardcoded color. Also re-centers/caps the width so desktop/browser
-   preview during QA doesn't show a full-bleed bar under a narrow centered page — no-op on real
-   mobile widths. */
+/* Floating tab bar: detached from the edges, clears the home indicator via the safe-area inset,
+   solid surface with a faint blur so scrolling content never bleeds through. Desktop preview gets
+   a capped width so the bar doesn't stretch full-bleed under a narrow centered page. */
 .app-tabbar {
-  left: 12px;
-  right: 12px;
-  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
   width: auto;
   max-width: 560px;
   margin-inline: auto;
   transform: none;
-  border-radius: 26px;
+  border-radius: 24px;
   border: 1px solid var(--tgui--outline);
-  background: color-mix(in srgb, var(--tgui--secondary_bg_color) 78%, transparent);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  box-shadow:
-    0 12px 32px color-mix(in srgb, #000 22%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #fff 8%, transparent);
+  background: color-mix(in srgb, var(--tgui--section_bg_color) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--wp-shadow-3);
   padding-bottom: 0;
   overflow: hidden;
 }
 
 /* ---------------------------------------------------------------------------------------------
- * Screens: every Section becomes a rounded card
+ * 4. Screens: every Section is a card; Swiss-style section labels; staggered entry
  * ------------------------------------------------------------------------------------------- */
 
 .screen {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  gap: 12px;
-  padding-top: 4px;
+  gap: var(--space-3);
+  padding-top: var(--space-1);
 }
 
 .screen > section,
@@ -322,24 +371,64 @@
   border: 1px solid var(--tgui--outline);
   border-radius: var(--wp-radius-card);
   background: var(--tgui--section_bg_color);
-  box-shadow: var(--wp-card-shadow);
+  box-shadow: var(--wp-shadow-1);
 }
 
-/* The kit's "base" platform adds its own 1px drop shadow under the Section body, which shows up
-   as a stray line between the body and the footer once the whole Section is a bordered card. */
+/* The kit's "base" platform adds its own drop shadow under the Section body, which shows as a
+   stray line between body and footer once the whole Section is a bordered card. */
 .screen > section > div:first-child {
   box-shadow: none;
 }
 
+/* Section headers as uppercase labels (Swiss): 12px / 600 / +0.08em, muted. */
+.screen > section header {
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  color: var(--tgui--section_header_text_color);
+}
+
+.screen > section header,
+.screen > section header > * {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.screen > section footer {
+  padding: var(--space-2) var(--space-4) var(--space-4);
+  color: var(--tgui--hint_color);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Staggered entrance (40ms/item, transform + opacity only). */
+.screen > * {
+  animation: wp-rise var(--wp-dur-slow) var(--wp-ease-out) both;
+  animation-delay: calc(var(--wp-i, 0) * 40ms);
+}
+
+.screen > :nth-child(2) { --wp-i: 1; }
+.screen > :nth-child(3) { --wp-i: 2; }
+.screen > :nth-child(4) { --wp-i: 3; }
+.screen > :nth-child(5) { --wp-i: 4; }
+.screen > :nth-child(6) { --wp-i: 5; }
+.screen > :nth-child(7) { --wp-i: 6; }
+.screen > :nth-child(n + 8) { --wp-i: 7; }
+
+/* Press feedback: opacity + subtle scale, no layout change. */
 .screen :where(button, a, [role="button"]) {
+  cursor: pointer;
   transition:
-    transform 140ms ease,
-    filter 140ms ease,
-    opacity 140ms ease;
+    transform var(--wp-dur-fast) var(--wp-ease),
+    opacity var(--wp-dur-fast) var(--wp-ease),
+    background-color var(--wp-dur) var(--wp-ease),
+    border-color var(--wp-dur) var(--wp-ease),
+    box-shadow var(--wp-dur) var(--wp-ease);
 }
 
 .screen :where(button:not(:disabled), a, [role="button"]):active {
-  transform: translateY(1px) scale(0.99);
+  transform: scale(0.98);
 }
 
 .mono {
@@ -353,7 +442,7 @@
 
 .stat-value {
   flex: 0 0 auto;
-  padding-left: 12px;
+  padding-left: var(--space-3);
   color: var(--tgui--text_color);
   font-size: 16px;
   font-weight: 600;
@@ -368,74 +457,81 @@
   place-items: center;
   width: 56px;
   height: 56px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--wp-accent) 12%, var(--tgui--secondary_bg_color));
-  color: var(--wp-accent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--wp-primary) 14%, var(--tgui--section_bg_color));
+  color: var(--wp-primary-text);
 }
 
 .state-icon-success {
-  background: color-mix(in srgb, var(--wp-success) 14%, var(--tgui--secondary_bg_color));
+  background: color-mix(in srgb, var(--wp-success) 14%, var(--tgui--section_bg_color));
   color: var(--wp-success);
 }
 
 .state-icon-warning {
-  background: color-mix(in srgb, var(--wp-warning) 16%, var(--tgui--secondary_bg_color));
-  color: color-mix(in srgb, var(--wp-warning) 80%, var(--tgui--text_color));
+  background: color-mix(in srgb, var(--wp-warning) 16%, var(--tgui--section_bg_color));
+  color: var(--wp-warning);
 }
 
 .state-icon-danger {
-  background: color-mix(in srgb, var(--wp-danger) 12%, var(--tgui--secondary_bg_color));
+  background: color-mix(in srgb, var(--wp-danger) 12%, var(--tgui--section_bg_color));
   color: var(--wp-danger);
 }
 
 .state-icon-s {
   width: 36px;
   height: 36px;
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
 .empty-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px;
+  gap: var(--space-2);
   width: 100%;
 }
 
 /* ---------------------------------------------------------------------------------------------
- * Hero panels (Connect / Mint)
+ * 5. Hero panels (Connect / Mint)
  * ------------------------------------------------------------------------------------------- */
 
 .hero-panel {
-  padding: 20px 18px 18px;
-  background: radial-gradient(
-    circle at 12% 0%,
-    color-mix(in srgb, var(--wp-accent) 16%, transparent),
-    transparent 62%
-  );
+  position: relative;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+}
+
+/* Single flat brand stripe instead of a gradient wash. */
+.hero-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--wp-primary);
 }
 
 .hero-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 10px;
+  margin-bottom: var(--space-3);
   padding: 4px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--wp-accent) 14%, var(--tgui--secondary_bg_color));
-  color: var(--wp-accent);
+  border-radius: var(--wp-radius-pill);
+  background: color-mix(in srgb, var(--wp-primary) 16%, var(--tgui--section_bg_color));
+  color: var(--wp-primary-text);
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .hero-title {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-2);
   color: var(--tgui--text_color);
-  font-size: 30px;
-  font-weight: 800;
-  line-height: 1.08;
-  letter-spacing: -0.01em;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
   overflow-wrap: anywhere;
 }
 
@@ -446,52 +542,53 @@
 .hero-copy,
 .muted-copy {
   margin: 0;
+  max-width: 60ch;
   color: var(--tgui--subtitle_text_color);
-  font-size: 15px;
-  line-height: 1.4;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 .connect-free-copy {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 12px 0 0;
+  margin: var(--space-3) 0 0;
   color: var(--wp-success);
   font-size: 14px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
 .connect-cta,
 .mint-action {
   display: flex;
   justify-content: center;
-  padding: 14px 16px;
+  padding: var(--space-4);
 }
 
 .connect-generate {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: var(--space-2);
+  padding: var(--space-4);
 }
 
 /* ---------------------------------------------------------------------------------------------
- * Scan result: score card
+ * 6. Scan result: score card
  * ------------------------------------------------------------------------------------------- */
 
 .profile-result-card {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 14px 16px 16px;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4) var(--space-4);
 }
 
 .profile-result-score {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 14px;
+  gap: var(--space-4);
 }
 
 .profile-score-hex {
@@ -501,14 +598,8 @@
   width: 104px;
   height: 116px;
   clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%);
-  background:
-    linear-gradient(
-      145deg,
-      color-mix(in srgb, var(--wp-accent) 90%, #ffffff),
-      color-mix(in srgb, var(--wp-success) 64%, var(--wp-accent))
-    );
-  color: var(--wp-accent-text);
-  box-shadow: 0 16px 34px color-mix(in srgb, var(--wp-accent) 24%, transparent);
+  background: var(--wp-primary);
+  color: var(--wp-on-primary);
 }
 
 .profile-score-hex span,
@@ -519,17 +610,18 @@
 .profile-score-hex span {
   grid-row: 2;
   font-size: 32px;
-  font-weight: 820;
+  font-weight: 700;
   line-height: 1;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
 .profile-score-hex small {
   grid-row: 3;
   margin-top: 2px;
-  font-size: 11px;
-  font-weight: 700;
-  opacity: 0.82;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.8;
 }
 
 .profile-result-copy {
@@ -537,31 +629,30 @@
 }
 
 .profile-result-copy h2 {
-  margin: 8px 0 6px;
+  margin: var(--space-2) 0 var(--space-1);
   color: var(--tgui--text_color);
-  font-size: 20px;
-  font-weight: 760;
-  line-height: 1.15;
-  letter-spacing: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
 .profile-result-copy p {
   margin: 0;
   color: var(--tgui--subtitle_text_color);
   font-size: 14px;
-  line-height: 1.38;
+  line-height: 1.5;
 }
 
 .factor-radar-wrap {
   display: grid;
   justify-items: center;
-  gap: 10px;
-  padding: 10px 8px 12px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2) var(--space-3);
   border: 1px solid var(--tgui--outline);
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--wp-accent) 16%, transparent), transparent 58%),
-    color-mix(in srgb, var(--tgui--secondary_bg_color) 74%, var(--tgui--bg_color));
+  border-radius: var(--wp-radius-tile);
+  background: var(--tgui--secondary_bg_color);
 }
 
 .factor-radar {
@@ -572,45 +663,45 @@
 
 .factor-radar-grid {
   fill: none;
-  stroke: color-mix(in srgb, var(--tgui--text_color) 15%, transparent);
+  stroke: color-mix(in srgb, var(--tgui--text_color) 14%, transparent);
   stroke-width: 1;
 }
 
 .factor-radar-axis {
-  stroke: color-mix(in srgb, var(--tgui--text_color) 13%, transparent);
+  stroke: color-mix(in srgb, var(--tgui--text_color) 12%, transparent);
   stroke-width: 1;
 }
 
 .factor-radar-shape {
-  fill: color-mix(in srgb, var(--wp-accent) 28%, transparent);
-  stroke: var(--wp-accent);
+  fill: color-mix(in srgb, var(--wp-primary) 26%, transparent);
+  stroke: var(--wp-primary);
   stroke-linejoin: round;
   stroke-width: 2;
 }
 
 .factor-radar-dot {
-  stroke: var(--tgui--section_bg_color);
+  stroke: var(--tgui--secondary_bg_color);
   stroke-width: 1.5;
 }
 
 .factor-radar-dot-steady,
 .factor-pill-steady {
-  --factor-tone: #19c37d;
+  --factor-tone: var(--wp-tone-steady);
 }
 
 .factor-radar-dot-flow,
 .factor-pill-flow {
-  --factor-tone: #2ea6ff;
+  --factor-tone: var(--wp-tone-flow);
 }
 
 .factor-radar-dot-explore,
 .factor-pill-explore {
-  --factor-tone: #f0b429;
+  --factor-tone: var(--wp-tone-explore);
 }
 
 .factor-radar-dot-craft,
 .factor-pill-craft {
-  --factor-tone: #d96570;
+  --factor-tone: var(--wp-tone-craft);
 }
 
 .factor-radar-dot {
@@ -620,7 +711,7 @@
 .factor-radar text {
   fill: var(--tgui--subtitle_text_color);
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .factor-pill-row {
@@ -636,20 +727,21 @@
   align-items: center;
   gap: 6px;
   max-width: 100%;
-  padding: 5px 9px;
-  border: 1px solid color-mix(in srgb, var(--factor-tone) 34%, var(--tgui--outline));
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--factor-tone) 12%, var(--tgui--secondary_bg_color));
+  padding: 5px 10px;
+  border: 1px solid var(--tgui--outline);
+  border-radius: var(--wp-radius-pill);
+  background: var(--tgui--section_bg_color);
   color: var(--tgui--text_color);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 
 .factor-pill::before {
   content: "";
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--factor-tone);
 }
@@ -657,12 +749,12 @@
 .profile-result-metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .profile-result-metrics div {
   min-width: 0;
-  padding: 10px 8px;
+  padding: var(--space-3) var(--space-2);
   border: 1px solid var(--tgui--outline);
   border-radius: var(--wp-radius-tile);
   background: var(--tgui--secondary_bg_color);
@@ -677,48 +769,47 @@
 .profile-result-metrics strong {
   overflow-wrap: anywhere;
   color: var(--tgui--text_color);
-  font-size: 15px;
-  font-weight: 760;
-  line-height: 1.15;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
 
 .profile-result-metrics span {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   color: var(--tgui--subtitle_text_color);
-  font-size: 11px;
-  line-height: 1.2;
+  font-size: 12px;
+  line-height: 1.3;
 }
 
 /* ---------------------------------------------------------------------------------------------
- * Profile screen
+ * 7. Profile screen
  * ------------------------------------------------------------------------------------------- */
 
 /* SegmentedControl defaults to width/height 100% (meant for a full-width row) — this one lives in
    a Cell's `after` slot next to a label, so it needs an explicit compact footprint instead. */
 .profile-language-segmented {
   width: auto;
-  min-width: 172px;
-  height: 34px;
+  min-width: 176px;
+  height: 36px;
   flex-shrink: 0;
 }
 
 .profile-language-segmented button {
-  padding: 6px 10px;
-  font-size: 13px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .profile-header-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  margin: 0 12px 12px;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  margin: 0 var(--space-4) var(--space-4);
   border: 1px solid var(--tgui--outline);
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--wp-accent) 12%, transparent), transparent 60%),
-    color-mix(in srgb, var(--tgui--secondary_bg_color) 82%, var(--tgui--bg_color));
+  border-radius: var(--wp-radius-tile);
+  background: var(--tgui--secondary_bg_color);
 }
 
 .profile-header-copy {
@@ -726,16 +817,17 @@
   flex-direction: column;
   min-width: 0;
   flex: 1;
-  gap: 3px;
+  gap: 2px;
 }
 
 .profile-header-name {
   display: -webkit-box;
   overflow: hidden;
   color: var(--tgui--text_color);
-  font-size: 17px;
-  font-weight: 760;
-  line-height: 1.2;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
   overflow-wrap: anywhere;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -743,8 +835,8 @@
 
 .profile-header-subtitle {
   color: var(--tgui--subtitle_text_color);
-  font-size: 13px;
-  line-height: 1.3;
+  font-size: 14px;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 
@@ -755,67 +847,69 @@
 .referral-section-header {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   min-height: 24px;
 }
 
+/* 44px hit area around the 20px glyph. */
 .referral-info-button {
-  color: var(--wp-accent);
+  min-width: 44px;
+  min-height: 44px;
+  margin: -12px 0;
+  color: var(--wp-primary-text);
 }
 
 .referral-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 4px 16px 16px;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-4) var(--space-4);
 }
 
 .referral-link-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--tgui--outline);
   border-radius: var(--wp-radius-tile);
-  background: color-mix(in srgb, var(--tgui--secondary_bg_color) 84%, var(--tgui--bg_color));
+  background: var(--tgui--secondary_bg_color);
 }
 
 .referral-link-row > svg {
   flex: 0 0 auto;
-  color: var(--wp-accent);
+  color: var(--wp-primary-text);
 }
 
 .referral-link {
   min-width: 0;
   color: var(--tgui--text_color);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.5;
   overflow-wrap: anywhere;
-  word-break: break-all;
 }
 
 .referral-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .referral-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .referral-stats-grid div {
   min-width: 0;
-  padding: 12px 6px;
+  padding: var(--space-3) 6px;
   border: 1px solid var(--tgui--outline);
   border-radius: var(--wp-radius-tile);
-  background: color-mix(in srgb, var(--tgui--secondary_bg_color) 84%, var(--tgui--bg_color));
+  background: var(--tgui--secondary_bg_color);
   text-align: center;
   transition:
-    transform 180ms ease,
-    border-color 180ms ease,
-    background-color 180ms ease;
+    border-color var(--wp-dur) var(--wp-ease),
+    box-shadow var(--wp-dur) var(--wp-ease);
 }
 
 .referral-stats-grid strong,
@@ -825,42 +919,45 @@
 
 .referral-stats-grid strong {
   color: var(--tgui--text_color);
-  font-size: 22px;
-  font-weight: 760;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
 .referral-stats-grid span {
-  margin-top: 5px;
+  margin-top: 6px;
   color: var(--tgui--subtitle_text_color);
-  font-size: 11px;
-  line-height: 1.2;
+  font-size: 12px;
+  line-height: 1.3;
   hyphens: auto;
 }
 
 .referral-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 30;
+  z-index: 40;
   display: grid;
   place-items: center;
   padding: max(18px, env(safe-area-inset-top, 0px)) 18px max(18px, env(safe-area-inset-bottom, 0px));
-  background: color-mix(in srgb, #000 46%, transparent);
-  animation: referral-modal-fade 160ms ease-out;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: referral-modal-fade var(--wp-dur-fast) ease-out;
 }
 
 .referral-modal {
   width: min(100%, 390px);
   max-height: min(680px, 92dvh);
   overflow-y: auto;
-  padding: 18px;
-  border: 1px solid color-mix(in srgb, var(--wp-accent) 28%, var(--tgui--outline));
+  padding: var(--space-5);
+  border: 1px solid var(--tgui--outline);
   border-radius: var(--wp-radius-card);
-  background: var(--tgui--secondary_bg_color);
+  background: var(--tgui--section_bg_color);
   color: var(--tgui--text_color);
-  box-shadow: 0 20px 64px color-mix(in srgb, #000 42%, transparent);
-  animation: referral-modal-enter 180ms ease-out;
+  box-shadow: var(--wp-shadow-3);
+  animation: referral-modal-enter var(--wp-dur) var(--wp-ease-out);
 }
 
 .referral-modal-icon {
@@ -868,10 +965,10 @@
   place-items: center;
   width: 48px;
   height: 48px;
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--wp-accent) 18%, var(--tgui--bg_color));
-  color: var(--wp-accent);
+  background: color-mix(in srgb, var(--wp-primary) 16%, var(--tgui--section_bg_color));
+  color: var(--wp-primary-text);
 }
 
 .referral-modal h2,
@@ -880,29 +977,30 @@
 }
 
 .referral-modal h2 {
-  margin-bottom: 8px;
-  font-size: 20px;
-  line-height: 1.16;
-  letter-spacing: 0;
+  margin-bottom: var(--space-2);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .referral-modal p {
   color: var(--tgui--subtitle_text_color);
   font-size: 14px;
-  line-height: 1.38;
+  line-height: 1.5;
 }
 
 .referral-credit-list {
   display: grid;
-  gap: 8px;
-  margin: 14px 0;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
 }
 
 .referral-credit-list div {
-  padding: 11px;
+  padding: var(--space-3);
   border: 1px solid var(--tgui--outline);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--tgui--bg_color) 54%, var(--tgui--secondary_bg_color));
+  border-radius: var(--wp-radius-tile);
+  background: var(--tgui--secondary_bg_color);
 }
 
 .referral-credit-list strong,
@@ -911,55 +1009,53 @@
 }
 
 .referral-credit-list strong {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
   font-size: 14px;
-  line-height: 1.2;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .referral-credit-list span {
   color: var(--tgui--subtitle_text_color);
   font-size: 13px;
-  line-height: 1.35;
+  line-height: 1.5;
 }
 
 .referral-modal-note {
-  padding: 10px 11px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--wp-accent) 12%, var(--tgui--bg_color));
+  padding: var(--space-3);
+  border-left: 3px solid var(--wp-primary);
+  border-radius: 4px var(--wp-radius-tile) var(--wp-radius-tile) 4px;
+  background: color-mix(in srgb, var(--wp-primary) 10%, var(--tgui--section_bg_color));
 }
 
 .referral-modal-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin: 14px 0 8px;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 var(--space-2);
 }
 
 /* ---------------------------------------------------------------------------------------------
- * Mint screen: eligibility tiles
+ * 8. Mint screen: eligibility tiles
  * ------------------------------------------------------------------------------------------- */
 
 .eligible-passport-block {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 4px 16px 16px;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-4) var(--space-4);
 }
 
 .eligible-passport-head {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--wp-accent) 28%, var(--tgui--outline));
-  border-radius: 18px;
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--wp-accent) 14%, var(--tgui--secondary_bg_color)),
-      color-mix(in srgb, var(--wp-success) 10%, var(--tgui--secondary_bg_color))
-    );
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--tgui--outline);
+  border-left: 4px solid var(--wp-primary);
+  border-radius: var(--wp-radius-tile);
+  background: var(--tgui--secondary_bg_color);
 }
 
 .eligible-passport-head strong,
@@ -969,22 +1065,23 @@
 
 .eligible-passport-head strong {
   color: var(--tgui--text_color);
-  font-size: 17px;
-  font-weight: 760;
-  line-height: 1.2;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
 .eligible-passport-head span {
-  margin-top: 4px;
+  margin-top: var(--space-1);
   color: var(--tgui--subtitle_text_color);
-  font-size: 13px;
-  line-height: 1.25;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .eligible-category-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .eligible-category-tile {
@@ -993,8 +1090,8 @@
   align-items: flex-start;
   min-width: 0;
   min-height: 104px;
-  gap: 8px;
-  padding: 12px;
+  gap: var(--space-2);
+  padding: var(--space-3);
   border: 1px solid var(--tgui--outline);
   border-radius: var(--wp-radius-tile);
   background: var(--tgui--secondary_bg_color);
@@ -1002,24 +1099,25 @@
 
 .eligible-category-tile-canMint,
 .eligible-category-tile-canRefresh {
-  border-color: color-mix(in srgb, var(--wp-accent) 42%, var(--tgui--outline));
-  background: color-mix(in srgb, var(--wp-accent) 10%, var(--tgui--secondary_bg_color));
+  border-color: color-mix(in srgb, var(--wp-primary) 55%, var(--tgui--outline));
+  background: color-mix(in srgb, var(--wp-primary) 10%, var(--tgui--section_bg_color));
 }
 
 .eligible-category-tile-minted {
-  border-color: color-mix(in srgb, var(--wp-success) 38%, var(--tgui--outline));
-  background: color-mix(in srgb, var(--wp-success) 10%, var(--tgui--secondary_bg_color));
+  border-color: color-mix(in srgb, var(--wp-success) 45%, var(--tgui--outline));
+  background: color-mix(in srgb, var(--wp-success) 9%, var(--tgui--section_bg_color));
 }
 
 .eligible-category-tile-locked {
-  opacity: 0.7;
+  opacity: 0.72;
 }
 
 .eligible-category-tile > span {
   color: var(--tgui--text_color);
   font-size: 15px;
-  font-weight: 760;
-  line-height: 1.2;
+  font-weight: 600;
+  line-height: 1.25;
+  hyphens: auto;
   overflow-wrap: anywhere;
 }
 
@@ -1027,7 +1125,7 @@
   margin-top: auto;
   color: var(--tgui--subtitle_text_color);
   font-size: 12px;
-  line-height: 1.24;
+  line-height: 1.3;
 }
 
 .mint-status-cell {
@@ -1035,15 +1133,15 @@
 }
 
 /* ---------------------------------------------------------------------------------------------
- * Scanning screen
+ * 9. Scanning screen
  * ------------------------------------------------------------------------------------------- */
 
 .scanning-body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
-  padding: 20px 16px 18px;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-4) var(--space-4);
 }
 
 .scan-ring-wrap {
@@ -1061,17 +1159,16 @@
 
 .scan-ring-track {
   fill: none;
-  stroke: color-mix(in srgb, var(--tgui--text_color) 9%, transparent);
+  stroke: var(--tgui--tertiary_bg_color);
   stroke-width: 10;
 }
 
 .scan-ring-value {
   fill: none;
-  stroke: var(--wp-accent);
+  stroke: var(--wp-primary);
   stroke-width: 10;
   stroke-linecap: round;
-  transition: stroke-dashoffset 600ms ease;
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--wp-accent) 45%, transparent));
+  transition: stroke-dashoffset 600ms var(--wp-ease);
 }
 
 .scan-ring-center {
@@ -1086,19 +1183,16 @@
 
 .scanning-progress-value {
   color: var(--tgui--text_color);
-  font-size: 34px;
-  font-weight: 800;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
-.scanning-progress-caption {
-  color: var(--tgui--hint_color);
-  font-size: 12px;
-  font-weight: 600;
-}
-
 .scanning-progress-bar {
+  /* Kit Progress paints with link_color (text-safe amber); match the ring's fill instead. */
+  --tgui--link_color: var(--wp-primary);
   width: 100%;
   height: 6px;
   border-radius: 3px;
@@ -1108,7 +1202,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   width: 100%;
   text-align: center;
 }
@@ -1116,23 +1210,23 @@
 .scanning-step {
   color: var(--tgui--text_color);
   font-size: 16px;
-  font-weight: 700;
-  line-height: 1.3;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .scanning-progress-copy {
   color: var(--tgui--subtitle_text_color);
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .scan-steps {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   width: 100%;
   margin: 0;
-  padding: 4px 0 0;
+  padding: var(--space-1) 0 0;
   list-style: none;
 }
 
@@ -1140,14 +1234,15 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 7px 10px;
-  border-radius: 12px;
+  min-height: 40px;
+  padding: var(--space-2) 10px;
+  border-radius: 10px;
   color: var(--tgui--hint_color);
   font-size: 14px;
-  line-height: 1.3;
+  line-height: 1.4;
   transition:
-    background-color 200ms ease,
-    color 200ms ease;
+    background-color var(--wp-dur) var(--wp-ease),
+    color var(--wp-dur) var(--wp-ease);
 }
 
 .scan-step-icon {
@@ -1157,7 +1252,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 1.5px solid color-mix(in srgb, var(--tgui--text_color) 18%, transparent);
+  border: 1.5px solid var(--tgui--quartenary_bg_color);
   color: transparent;
 }
 
@@ -1167,20 +1262,20 @@
 
 .scan-step-done .scan-step-icon {
   border-color: transparent;
-  background: color-mix(in srgb, var(--wp-success) 18%, var(--tgui--secondary_bg_color));
+  background: color-mix(in srgb, var(--wp-success) 18%, var(--tgui--section_bg_color));
   color: var(--wp-success);
 }
 
 .scan-step-active {
-  background: color-mix(in srgb, var(--wp-accent) 10%, var(--tgui--secondary_bg_color));
+  background: color-mix(in srgb, var(--wp-primary) 12%, var(--tgui--section_bg_color));
   color: var(--tgui--text_color);
   font-weight: 600;
 }
 
 .scan-step-active .scan-step-icon {
   border-color: transparent;
-  background: var(--wp-accent);
-  color: var(--wp-accent-text);
+  background: var(--wp-primary);
+  color: var(--wp-on-primary);
 }
 
 .scanning-header-inner {
@@ -1195,18 +1290,18 @@
 }
 
 .scanning-hint {
-  padding: 0 4px;
+  padding: 0 var(--space-1);
   color: var(--tgui--hint_color);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.5;
   text-align: center;
 }
 
 .status-stack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 16px 14px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
 }
 
 .score-bar-wrap {
@@ -1222,8 +1317,19 @@
 }
 
 /* ---------------------------------------------------------------------------------------------
- * Animations
+ * 10. Animations
  * ------------------------------------------------------------------------------------------- */
+
+@keyframes wp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 @keyframes scan-icon-spin {
   from {
@@ -1246,7 +1352,7 @@
 @keyframes referral-modal-enter {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+    transform: translateY(12px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -1256,13 +1362,13 @@
 
 @media (hover: hover) and (pointer: fine) {
   .screen :where(button:not(:disabled), a, [role="button"]):hover {
-    filter: brightness(1.03);
+    opacity: 0.92;
   }
 
-  .referral-stats-grid div:hover {
-    transform: translateY(-1px);
-    border-color: color-mix(in srgb, var(--wp-accent) 45%, var(--tgui--outline));
-    box-shadow: 0 8px 18px color-mix(in srgb, var(--tgui--text_color, #111111) 8%, transparent);
+  .referral-stats-grid div:hover,
+  .eligible-category-tile:hover {
+    border-color: color-mix(in srgb, var(--wp-primary) 50%, var(--tgui--outline));
+    box-shadow: var(--wp-shadow-2);
   }
 }
 
@@ -1273,18 +1379,19 @@
     scroll-behavior: auto !important;
   }
 
+  .screen > *,
   .screen :where(button, a, [role="button"]),
   .referral-modal-backdrop,
   .referral-modal,
   .referral-stats-grid div,
+  .eligible-category-tile,
   .scan-ring-value,
   .scan-step {
     transition: none;
     animation: none;
   }
 
-  .screen :where(button:not(:disabled), a, [role="button"]):active,
-  .referral-stats-grid div:hover {
+  .screen :where(button:not(:disabled), a, [role="button"]):active {
     transform: none;
   }
 
@@ -1294,12 +1401,12 @@
 }
 
 /* ---------------------------------------------------------------------------------------------
- * Responsive
+ * 11. Responsive (375 / 768 / 1024 / 1440)
  * ------------------------------------------------------------------------------------------- */
 
-@media (max-width: 380px) {
+@media (max-width: 374px) {
   .content-col {
-    padding: 0 8px;
+    padding: 0 var(--space-2);
   }
 
   .profile-result-score,
@@ -1316,25 +1423,20 @@
     justify-self: center;
   }
 
-  .profile-result-copy h2 {
-    font-size: 19px;
-  }
-
   .profile-result-metrics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
   }
 
   .profile-result-metrics div {
-    padding: 8px 4px;
+    padding: var(--space-2) var(--space-1);
   }
 
   .profile-result-metrics strong {
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .profile-result-metrics span {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .referral-modal-actions {
@@ -1345,17 +1447,21 @@
     gap: 6px;
   }
 
+  .referral-stats-grid div {
+    padding: 10px 3px;
+  }
+
   .referral-stats-grid strong {
-    font-size: 19px;
+    font-size: 20px;
   }
 
   .referral-stats-grid span {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .app-header {
-    padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px;
-    gap: 4px;
+    padding: calc(env(safe-area-inset-top, 0px) + var(--space-2)) var(--space-3) var(--space-2);
+    gap: var(--space-1);
   }
 
   .app-brand {
@@ -1363,8 +1469,8 @@
   }
 
   .app-brand-mark {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 8px;
   }
 
@@ -1373,17 +1479,21 @@
   }
 
   .hero-title {
-    font-size: 26px;
+    font-size: 28px;
+  }
+
+  .hero-panel {
+    padding: var(--space-5) var(--space-4) var(--space-4);
   }
 
   .referral-body {
-    padding: 4px 12px 12px;
+    padding: var(--space-1) var(--space-3) var(--space-3);
   }
 
   .profile-header-card {
-    gap: 10px;
-    padding: 12px;
-    margin: 0 10px 10px;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    margin: 0 var(--space-3) var(--space-3);
   }
 
   .profile-header-name {
@@ -1391,28 +1501,24 @@
   }
 
   .profile-language-segmented {
-    min-width: 148px;
-    height: 32px;
+    min-width: 150px;
+    height: 34px;
   }
 
   .profile-language-segmented button {
     padding: 6px 4px;
-    font-size: 12px;
-  }
-
-  .referral-stats-grid div {
-    padding: 10px 3px;
+    font-size: 13px;
   }
 
   .eligible-passport-block,
   .profile-result-card {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
   }
 
   .app-tabbar {
-    left: 8px;
-    right: 8px;
+    left: var(--space-2);
+    right: var(--space-2);
   }
 
   .app-tabbar button,
@@ -1426,7 +1532,7 @@
   }
 
   .scanning-progress-value {
-    font-size: 30px;
+    font-size: 28px;
   }
 }
 
@@ -1445,22 +1551,23 @@
   }
 }
 
-@media (min-width: 600px) {
+@media (min-width: 768px) {
   .app-shell {
-    padding: 14px 14px 0;
+    padding: var(--space-4) var(--space-4) 0;
   }
 
   .app-header {
     width: min(100%, 760px);
-    margin: 0 auto 10px;
-    padding: 10px 12px 12px;
-    border: 1px solid var(--tgui--divider);
+    margin: 0 auto var(--space-3);
+    padding: var(--space-3) var(--space-3) var(--space-3);
+    border: 1px solid var(--tgui--outline);
     border-radius: var(--wp-radius-card);
-    background: var(--tgui--secondary_bg_color);
+    background: var(--tgui--section_bg_color);
+    box-shadow: var(--wp-shadow-1);
   }
 
   :root[data-tg-fullscreen-requested="true"] .app-header {
-    padding-top: 10px;
+    padding-top: var(--space-3);
   }
 
   .app-topnav {
@@ -1472,11 +1579,11 @@
   }
 
   .app-main {
-    padding-bottom: 24px;
+    padding-bottom: var(--space-6);
   }
 
   .content-col {
-    max-width: 640px;
+    max-width: 680px;
   }
 
   .eligible-category-grid {
@@ -1484,14 +1591,14 @@
   }
 }
 
-@media (min-width: 960px) {
+@media (min-width: 1024px) {
   .content-col,
   .app-header {
     max-width: 760px;
   }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1440px) {
   .content-col,
   .app-header {
     max-width: 880px;

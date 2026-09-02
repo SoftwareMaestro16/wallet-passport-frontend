@@ -5,7 +5,7 @@ import { AppRoot, Button, Tabbar } from "@telegram-apps/telegram-ui";
 import { Fingerprint, Gem, ScanLine, UserRound } from "lucide-react";
 import { TonConnectButton, useTonConnectUI } from "@tonconnect/ui-react";
 import { THEME } from "@tonconnect/ui";
-import { TonConnectProvider } from "./ton/TonConnectProvider";
+import { TonConnectProvider, tonConnectColorsSet } from "./ton/TonConnectProvider";
 import { ConnectScreen } from "./features/connect/ConnectScreen";
 import { ScanningScreen } from "./features/scanning/ScanningScreen";
 import { ProfileScreen } from "./features/profile/ProfileScreen";
@@ -82,7 +82,7 @@ function TonConnectThemeSync({ theme }: { theme: AppTheme }) {
     // in the SDK, not a merge) — omitting it here would silently drop `twaReturnUrl` on every
     // theme change after the initial `TonConnectUIProvider` mount.
     setOptions({
-      uiPreferences: { theme: theme === "dark" ? THEME.DARK : THEME.LIGHT },
+      uiPreferences: { theme: theme === "dark" ? THEME.DARK : THEME.LIGHT, colorsSet: tonConnectColorsSet },
       actionsConfiguration: {
         twaReturnUrl: "https://t.me/WalletPassportXBot/scan",
         returnStrategy: "back",

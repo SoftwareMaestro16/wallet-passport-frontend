@@ -1,6 +1,8 @@
 :root {
   color-scheme: light dark;
-  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  /* Typography per design-system/wallet-passport/MASTER.md: IBM Plex Sans (financial, trustworthy),
+     system stack as fallback until the webfont arrives (display=swap in index.html). */
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 * {
@@ -18,7 +20,7 @@ body,
 }
 
 body {
-  font: 16px/1.45 var(--sans);
+  font: 16px/1.5 var(--sans);
   /* --tg-theme-* live on <html> (see applyThemeVars in src/app/telegram.ts), an ancestor of
      <body> — safe to read here. telegram-ui's own --tgui--* vars live on a div *inside* body
      (AppRoot), so they can't be read at this level; .app-shell references those instead. */
